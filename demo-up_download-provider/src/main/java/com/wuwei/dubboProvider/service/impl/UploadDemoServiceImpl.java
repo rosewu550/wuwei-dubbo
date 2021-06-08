@@ -2,7 +2,6 @@ package com.wuwei.dubboProvider.service.impl;
 
 import com.wuwei.dubboApi.entity.Document;
 import com.wuwei.dubboApi.service.UploadDemoService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Service;
 
 import java.io.*;

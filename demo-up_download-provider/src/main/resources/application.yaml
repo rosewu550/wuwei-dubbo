@@ -9,8 +9,13 @@ spring:
 dubbo:
   application:
     name: ${spring.application.name}
-  protocol:
-    port: 20880
-    name: dubbo
   registry:
-    address: nacos://127.0.0.1:5545
+#    address: nacos://127.0.0.1:5545
+    address: nacos://192.168.253.128:8848
+  protocols:
+    dubbo:
+        port: 20880
+        name: dubbo
+    hessian:
+        port: 20881
+        name: hessian

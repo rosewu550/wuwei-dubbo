@@ -1,6 +1,8 @@
 package com.wuwei.dubboApi.entity;
 
-public class Document {
+import java.io.Serializable;
+
+public class Document implements Serializable {
     private String name;
     private String size;
     private String url;
