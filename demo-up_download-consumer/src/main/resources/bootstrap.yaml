@@ -1,0 +1,8 @@
+spring:
+  cloud:
+    nacos:
+      config:
+        enabled: false
+        server-addr: 127.0.0.1:5545
+      discovery:
+        server-addr: 127.0.0.1:5545

@@ -1,0 +1,19 @@
+server:
+  port: 5050
+
+spring:
+  application:
+    name: demo-up_download-consumer
+
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+  registry:
+    address: nacos://127.0.0.1:5545
+  protocol:
+    port: 20880
+    name: dubbo
+  consumer:
+    check: false
+

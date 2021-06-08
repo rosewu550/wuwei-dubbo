@@ -1,0 +1,16 @@
+server:
+  port: 5051
+
+
+spring:
+  application:
+    name: demo-up_downlaod-provider
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+  protocol:
+    port: 20880
+    name: dubbo
+  registry:
+    address: nacos://127.0.0.1:5545
