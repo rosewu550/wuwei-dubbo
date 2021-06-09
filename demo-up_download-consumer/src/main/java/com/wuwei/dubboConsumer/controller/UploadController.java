@@ -16,7 +16,7 @@ import java.util.Objects;
 @RestController("/file")
 public class UploadController {
 
-    @Reference
+    @Reference(protocol = "hessian")
     private UploadDemoService uploadDemoService;
 
     @Reference
@@ -31,7 +31,7 @@ public class UploadController {
                 throw new Exception("文件名称无效：" + fileName);
             }
             Document document = new Document();
-            document.setName(file.getName());
+            document.setName(fileName);
             InputStream inputStream = file.getInputStream();
             uploadDemoService.uploadDocument(document,inputStream);
             msg = "上传成功！";
