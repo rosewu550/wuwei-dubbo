@@ -16,6 +16,8 @@ dubbo:
     dubbo:
         port: 20880
         name: dubbo
+        payload: 1382327000
     hessian:
         port: 20881
         name: hessian
+        server: tomcat

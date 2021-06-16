@@ -13,8 +13,9 @@ dubbo:
     address: nacos://127.0.0.1:5545
 #    address: nacos://192.168.253.128:8848
   protocol:
-    port: 20880
+    port: 20883
     name: dubbo
   consumer:
     check: false
+    timeout: 3000
 

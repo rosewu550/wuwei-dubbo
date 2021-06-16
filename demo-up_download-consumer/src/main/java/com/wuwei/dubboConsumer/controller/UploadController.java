@@ -10,30 +10,34 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Objects;
 
-@RestController("/file")
+@RestController
 public class UploadController {
 
-    @Reference(protocol = "hessian")
+    @Reference(protocol = "hessian", group = "hessian")
     private UploadDemoService uploadDemoService;
+
+    @Reference(protocol = "dubbo", group = "dubbo")
+    private UploadDemoService dubboUploadDemoService;
 
     @Reference
     private DownloadDemoService downloadDemoService;
 
     @PostMapping("/upload")
-    public String uploadFile(@RequestParam("file") MultipartFile file){
+    public String uploadFile(@RequestParam("file") MultipartFile file) {
         String msg;
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         try {
-            if(fileName.contains("..")) {
+            if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
             Document document = new Document();
             document.setName(fileName);
             InputStream inputStream = file.getInputStream();
-            uploadDemoService.uploadDocument(document,inputStream);
+            uploadDemoService.uploadDocument(document, inputStream);
             msg = "上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
@@ -43,15 +47,33 @@ public class UploadController {
     }
 
     @PostMapping("/uploadByOrigin")
-    public String uploadFileByOrigin(@RequestParam("file") MultipartFile file){
+    public String uploadFileByOrigin(@RequestParam("file") MultipartFile file) {
 
         String msg;
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         try {
-            if(fileName.contains("..")) {
+            if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
-            uploadDemoService.uploadDocument(fileName,file);
+            uploadDemoService.uploadDocument(fileName, file);
+            msg = "上传成功！";
+        } catch (Exception e) {
+            e.printStackTrace();
+            msg = "上传失败！";
+        }
+        return msg;
+    }
+
+
+    @PostMapping("/uploadByFiles")
+    public String uploadFileByFile(@RequestParam("file") File file) {
+        String msg;
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getName()));
+        try {
+            if (fileName.contains("..")) {
+                throw new Exception("文件名称无效：" + fileName);
+            }
+            uploadDemoService.uploadDocument(fileName, file);
             msg = "上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
@@ -61,14 +83,31 @@ public class UploadController {
     }
 
     @PostMapping("/uploadByBytes")
-    public String uploadFileByBytes(@RequestParam("file") MultipartFile file){
+    public String uploadFileByBytes(@RequestParam("file") MultipartFile file) {
         String msg;
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         try {
-            if(fileName.contains("..")) {
+            if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
-            uploadDemoService.uploadDocument(fileName,file.getBytes());
+            uploadDemoService.uploadDocument(fileName, file.getBytes());
+            msg = "上传成功！";
+        } catch (Exception e) {
+            e.printStackTrace();
+            msg = "上传失败！";
+        }
+        return msg;
+    }
+
+    @PostMapping("/dubbo/uploadByBytes")
+    public String uploadFileByBytesDubbo(@RequestParam("file") MultipartFile file) {
+        String msg;
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        try {
+            if (fileName.contains("..")) {
+                throw new Exception("文件名称无效：" + fileName);
+            }
+            dubboUploadDemoService.uploadDocument(fileName, file.getBytes());
             msg = "上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,14 +117,14 @@ public class UploadController {
     }
 
     @PostMapping("/uploadByInputStream")
-    public String uploadByInputStream(@RequestParam("file") MultipartFile file){
+    public String uploadByInputStream(@RequestParam("file") MultipartFile file) {
         String msg;
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         try {
-            if(fileName.contains("..")) {
+            if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
-            uploadDemoService.uploadDocument(fileName,file.getInputStream());
+            uploadDemoService.uploadDocument(fileName, file.getInputStream());
             msg = "上传成功！";
         } catch (Exception e) {
             e.printStackTrace();

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-@Service(protocol = "hessian")
+@Service(protocol = "hessian",group = "hessian")
 public class UploadDemoServiceImpl implements UploadDemoService {
 
 
