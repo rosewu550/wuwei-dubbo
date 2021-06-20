@@ -56,10 +56,10 @@ public class UploadController {
                 throw new Exception("文件名称无效：" + fileName);
             }
             uploadDemoService.uploadDocument(fileName, file);
-            msg = "上传成功！";
+            msg = "uploadByOrigin上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
-            msg = "上传失败！";
+            msg = "uploadByOrigin上传失败！";
         }
         return msg;
     }
@@ -74,10 +74,10 @@ public class UploadController {
                 throw new Exception("文件名称无效：" + fileName);
             }
             uploadDemoService.uploadDocument(fileName, file);
-            msg = "上传成功！";
+            msg = "uploadByFiles上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
-            msg = "上传失败！";
+            msg = "uploadByFiles上传失败！";
         }
         return msg;
     }
@@ -91,10 +91,10 @@ public class UploadController {
                 throw new Exception("文件名称无效：" + fileName);
             }
             uploadDemoService.uploadDocument(fileName, file.getBytes());
-            msg = "上传成功！";
+            msg = "uploadByBytes上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
-            msg = "上传失败！";
+            msg = "uploadByBytes上传失败！";
         }
         return msg;
     }
@@ -108,10 +108,10 @@ public class UploadController {
                 throw new Exception("文件名称无效：" + fileName);
             }
             dubboUploadDemoService.uploadDocument(fileName, file.getBytes());
-            msg = "上传成功！";
+            msg = "uploadByBytes上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
-            msg = "上传失败！";
+            msg = "uploadByBytes上传失败！";
         }
         return msg;
     }
@@ -124,11 +124,11 @@ public class UploadController {
             if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
-            uploadDemoService.uploadDocument(fileName, file.getInputStream());
-            msg = "上传成功！";
+            uploadDemoService.uploadDocumentByInputStream(fileName, file.getInputStream());
+            msg = "uploadByInputStream上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
-            msg = "上传失败！";
+            msg = "uploadByInputStream上传失败！";
         }
         return msg;
     }

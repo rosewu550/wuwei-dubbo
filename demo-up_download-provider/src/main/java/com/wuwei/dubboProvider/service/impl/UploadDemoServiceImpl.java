@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-@Service(protocol = "hessian",group = "hessian")
+@Service(protocol = "hessian", group = "hessian")
 public class UploadDemoServiceImpl implements UploadDemoService {
 
 
@@ -33,17 +33,18 @@ public class UploadDemoServiceImpl implements UploadDemoService {
     }
 
     @Override
-    public void uploadDocument(String filename, InputStream in) {
+    public void uploadDocumentByInputStream(String filename, InputStream in) {
         try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(processUploadFile(filename)))) {
             int i;
+            byte[] bytes = new byte[4 * 1024];
             BufferedInputStream bufferedInputStream = new BufferedInputStream(in);
-            while ((i = bufferedInputStream.read()) != -1) {
-                bufferedOutputStream.write(i);
+            while ((i = bufferedInputStream.read(bytes)) != -1) {
+                bufferedOutputStream.write(bytes, 0, i);
             }
-            System.out.println("***************上传成功！****************");
+            System.out.println("***************InputStream上传成功！****************");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("***************上传失败！****************");
+            System.out.println("***************InputStream上传失败！****************");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -65,14 +66,14 @@ public class UploadDemoServiceImpl implements UploadDemoService {
                         new BufferedOutputStream(fileOutputStream)
         ) {
             int i;
-            byte[] bytes = new byte[4*1024];
+            byte[] bytes = new byte[4 * 1024];
             while ((i = bufferedInputStream.read(bytes)) != -1) {
                 bufferedOutputStream.write(bytes, 0, i);
             }
-            System.out.println("上传成功！");
+            System.out.println("File上传成功！");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("上传失败！");
+            System.out.println("File上传失败！");
         }
     }
 
@@ -89,21 +90,22 @@ public class UploadDemoServiceImpl implements UploadDemoService {
         ) {
             byte[] bytes = Optional.ofNullable(fileByte).orElse(new byte[]{});
             bufferedOutputStream.write(bytes);
-            System.out.println("上传成功！");
+            System.out.println("byte[]上传成功！");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("上传失败！");
+            System.out.println("byte[]上传失败！");
         }
     }
 
     @Override
-    public void uploadDocument(String filename, MultipartFile multipartFile){
-        try (InputStream inputStream = multipartFile.getInputStream()) {
-            this.uploadDocument(filename,inputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("上传失败！");
-        }
+    public void uploadDocument(String filename, MultipartFile multipartFile) {
+//        try (InputStream inputStream = multipartFile.getInputStream()) {
+//            this.uploadDocument(filename, inputStream);
+//            System.out.println("multipartFile上传成功！");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            System.out.println("multipartFile上传失败！");
+//        }
     }
 
     /**

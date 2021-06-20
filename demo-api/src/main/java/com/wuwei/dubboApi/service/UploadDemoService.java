@@ -10,11 +10,11 @@ public interface UploadDemoService {
 
     void uploadDocument(Document document, InputStream inputStream);
 
-    void uploadDocument(String filename, InputStream inputStream);
-
     void uploadDocument(String filename, MultipartFile multipartFile);
 
     void uploadDocument(String filename, File file);
 
     void uploadDocument(String filename, byte[] fileBytes);
+
+    void uploadDocumentByInputStream(String filename, InputStream inputStream);
 }

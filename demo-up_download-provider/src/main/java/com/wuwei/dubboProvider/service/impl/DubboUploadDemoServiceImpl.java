@@ -20,11 +20,6 @@ public class DubboUploadDemoServiceImpl implements UploadDemoService {
     }
 
     @Override
-    public void uploadDocument(String filename, InputStream inputStream) {
-
-    }
-
-    @Override
     public void uploadDocument(String filename, MultipartFile multipartFile) {
 
     }
@@ -52,6 +47,11 @@ public class DubboUploadDemoServiceImpl implements UploadDemoService {
             e.printStackTrace();
             System.out.println("上传失败！");
         }
+    }
+
+    @Override
+    public void uploadDocumentByInputStream(String filename, InputStream inputStream) {
+
     }
 
     /**
