@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.4.1">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <io.github.ningyu.jmeter.plugin.dubbo.sample.DubboSample guiclass="io.github.ningyu.jmeter.plugin.dubbo.gui.DubboSampleGui" testclass="io.github.ningyu.jmeter.plugin.dubbo.sample.DubboSample" testname="本地" enabled="true">
+          <stringProp name="TestPlan.comments">测试hessian协议的上传</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_PROTOCOL">nacos</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_GROUP">DEFAULT_GROUP</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_NAMESPACE">Public</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_USER_NAME"></stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_PASSWORD"></stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_ADDRESS">127.0.0.1:5545</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_TIMEOUT"></stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_PROTOCOL">nacos</stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_GROUP">DEFAULT_GROUP</stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_USER_NAME"></stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_PASSWORD"></stringProp>
+          <stringProp name="FIELD_DUBBO_ADDRESS">127.0.0.1:5545</stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_TIMEOUT"></stringProp>
+          <stringProp name="FIELD_DUBBO_RPC_PROTOCOL">hessian://</stringProp>
+          <stringProp name="FIELD_DUBBO_TIMEOUT"></stringProp>
+          <stringProp name="FIELD_DUBBO_VERSION"></stringProp>
+          <stringProp name="FIELD_DUBBO_RETRIES">0</stringProp>
+          <stringProp name="FIELD_DUBBO_GROUP">hessian</stringProp>
+          <stringProp name="FIELD_DUBBO_CONNECTIONS">100</stringProp>
+          <stringProp name="FIELD_DUBBO_LOADBALANCE">random</stringProp>
+          <stringProp name="FIELD_DUBBO_ASYNC">sync</stringProp>
+          <stringProp name="FIELD_DUBBO_CLUSTER">failfast</stringProp>
+          <stringProp name="FIELD_DUBBO_INTERFACE">com.wuwei.dubboApi.service.UploadDemoService</stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD">uploadDocument</stringProp>
+          <intProp name="FIELD_DUBBO_METHOD_ARGS_SIZE">2</intProp>
+          <intProp name="FIELD_DUBBO_ATTACHMENT_ARGS_SIZE">1</intProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_TYPE1">String</stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_VALUE1">test.xlsx</stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_TYPE2">byte</stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_VALUE2">[24,12,45,23,33,78,10]</stringProp>
+          <stringProp name="FIELD_DUBBO_ATTACHMENT_ARGS_KEY1"></stringProp>
+          <stringProp name="FIELD_DUBBO_ATTACHMENT_ARGS_VALUE1"></stringProp>
+        </io.github.ningyu.jmeter.plugin.dubbo.sample.DubboSample>
+        <hashTree/>
+        <io.github.ningyu.jmeter.plugin.dubbo.sample.DubboSample guiclass="io.github.ningyu.jmeter.plugin.dubbo.gui.DubboSampleGui" testclass="io.github.ningyu.jmeter.plugin.dubbo.sample.DubboSample" testname="开发环境" enabled="false">
+          <stringProp name="TestPlan.comments">测试hessian协议的上传</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_PROTOCOL">nacos</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_GROUP">dubbo</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_NAMESPACE">test</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_USER_NAME"></stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_PASSWORD"></stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_ADDRESS">10.12.101.16:8848?namespace=5cbb70a5-xxx-xxx-xxx-d43479ae0932</stringProp>
+          <stringProp name="FIELD_DUBBO_CONFIG_CENTER_TIMEOUT"></stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_PROTOCOL">nacos</stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_GROUP">DEFAULT_GROUP</stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_USER_NAME"></stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_PASSWORD"></stringProp>
+          <stringProp name="FIELD_DUBBO_ADDRESS">10.12.101.16:8848?namespace=5cbb70a5-xxx-xxx-xxx-d43479ae0932</stringProp>
+          <stringProp name="FIELD_DUBBO_REGISTRY_TIMEOUT"></stringProp>
+          <stringProp name="FIELD_DUBBO_RPC_PROTOCOL">dubbo://</stringProp>
+          <stringProp name="FIELD_DUBBO_TIMEOUT"></stringProp>
+          <stringProp name="FIELD_DUBBO_VERSION">2.7.3</stringProp>
+          <stringProp name="FIELD_DUBBO_RETRIES">0</stringProp>
+          <stringProp name="FIELD_DUBBO_GROUP"></stringProp>
+          <stringProp name="FIELD_DUBBO_CONNECTIONS">100</stringProp>
+          <stringProp name="FIELD_DUBBO_LOADBALANCE">random</stringProp>
+          <stringProp name="FIELD_DUBBO_ASYNC">sync</stringProp>
+          <stringProp name="FIELD_DUBBO_CLUSTER">failfast</stringProp>
+          <stringProp name="FIELD_DUBBO_INTERFACE"></stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD"></stringProp>
+          <intProp name="FIELD_DUBBO_METHOD_ARGS_SIZE">1</intProp>
+          <intProp name="FIELD_DUBBO_ATTACHMENT_ARGS_SIZE">0</intProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_TYPE1"></stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_VALUE1"></stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_TYPE2"></stringProp>
+          <stringProp name="FIELD_DUBBO_METHOD_ARGS_PARAM_VALUE2"></stringProp>
+        </io.github.ningyu.jmeter.plugin.dubbo.sample.DubboSample>
+        <hashTree/>
+        <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="聚合报告" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
