@@ -10,19 +10,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Service(protocol = "hessian", group = "hessian")
-public class DownloadDemoServiceImpl implements DownloadDemoService {
-    protected final Logger logger = LoggerFactory.getLogger(DownloadDemoServiceImpl.class);
+@Service(protocol = "dubbo", group = "dubbo")
+public class DubboDownloadDemoServiceImpl implements DownloadDemoService {
+    protected final Logger logger = LoggerFactory.getLogger(DubboDownloadDemoServiceImpl.class);
 
     @Override
     public InputStream downloadDocument() {
         InputStream downloadStream;
         try (FileInputStream fileInputStream = new FileInputStream("")) {
             downloadStream =  new BufferedInputStream(fileInputStream);
-            logger.info("hessian下载成功！");
+            logger.info("dubbo下载成功！");
         } catch (IOException e) {
             downloadStream =  null;
-            logger.error("hessian下载成功！");
+            logger.error("dubbo下载成功！");
         }
         return downloadStream;
     }
