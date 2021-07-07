@@ -3,16 +3,17 @@ package com.wuwei.dubboProvider.service.impl;
 import com.wuwei.dubboApi.entity.Document;
 import com.wuwei.dubboApi.service.UploadDemoService;
 import org.apache.dubbo.config.annotation.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service(protocol = "hessian", group = "hessian")
-public class UploadDemoServiceImpl implements UploadDemoService {
-
+public class HessianUploadDemoServiceImpl implements UploadDemoService {
+    protected final Logger logger = LoggerFactory.getLogger(HessianUploadDemoServiceImpl.class);
 
     @Override
     public void uploadDocument(Document document, InputStream in) {
@@ -23,10 +24,10 @@ public class UploadDemoServiceImpl implements UploadDemoService {
             while ((i = bufferedInputStream.read()) != -1) {
                 bufferedOutputStream.write(i);
             }
-            System.out.println("***************上传成功！****************");
+            logger.info("***************上传成功！****************");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("***************上传失败！****************");
+            logger.error("***************上传失败！****************");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -41,10 +42,10 @@ public class UploadDemoServiceImpl implements UploadDemoService {
             while ((i = bufferedInputStream.read(bytes)) != -1) {
                 bufferedOutputStream.write(bytes, 0, i);
             }
-            System.out.println("***************InputStream上传成功！****************");
+            logger.info("***************InputStream上传成功！****************");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("***************InputStream上传失败！****************");
+            logger.error("***************InputStream上传失败！****************");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -70,10 +71,10 @@ public class UploadDemoServiceImpl implements UploadDemoService {
             while ((i = bufferedInputStream.read(bytes)) != -1) {
                 bufferedOutputStream.write(bytes, 0, i);
             }
-            System.out.println("File上传成功！");
+            logger.info("File上传成功！");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("File上传失败！");
+            logger.error("File上传失败！");
         }
     }
 
@@ -90,10 +91,10 @@ public class UploadDemoServiceImpl implements UploadDemoService {
         ) {
             byte[] bytes = Optional.ofNullable(fileByte).orElse(new byte[]{});
             bufferedOutputStream.write(bytes);
-            System.out.println("byte[]上传成功！");
+            logger.info("byte[]上传成功！");
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("byte[]上传失败！");
+            logger.error("byte[]上传失败！");
         }
     }
 
@@ -112,9 +113,9 @@ public class UploadDemoServiceImpl implements UploadDemoService {
      * 对上传的内容进行处理，并生成File对象
      */
     private File processUploadFile(String filename) {
-        String uuid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String uuid = UUID.randomUUID().toString();
         filename = uuid + filename;
-        File uploadFileDirectory = new File(System.getProperty("user.dir") + File.separator + "upload/demo");
+        File uploadFileDirectory = new File("/Volumes/download/dubbo_test_upload");
         if (!uploadFileDirectory.exists() && !uploadFileDirectory.isDirectory()) {
             boolean isMkdirs = uploadFileDirectory.mkdirs();
             if (!isMkdirs) {

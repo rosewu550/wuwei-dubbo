@@ -7,8 +7,10 @@ spring:
     nacos:
       config:
         enabled: false
-        server-addr: 127.0.0.1:5545
-#        server-addr: 192.168.253.128:8848
+        #        server-addr: 127.0.0.1:5545
+        server-addr: 10.10.27.86:8858
+      #        server-addr: 192.168.253.128:8848
       discovery:
-        server-addr: 127.0.0.1:5545
+        #        server-addr: 127.0.0.1:5545
+        server-addr: 10.10.27.86:8858
 #        server-addr: 192.168.253.128:8848

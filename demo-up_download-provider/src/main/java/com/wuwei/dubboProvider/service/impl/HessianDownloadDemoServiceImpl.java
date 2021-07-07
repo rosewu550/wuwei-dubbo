@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Service(protocol = "hessian", group = "hessian")
-public class DownloadDemoServiceImpl implements DownloadDemoService {
-    protected final Logger logger = LoggerFactory.getLogger(DownloadDemoServiceImpl.class);
+public class HessianDownloadDemoServiceImpl implements DownloadDemoService {
+    protected final Logger logger = LoggerFactory.getLogger(HessianDownloadDemoServiceImpl.class);
 
     @Override
     public InputStream downloadDocument() {

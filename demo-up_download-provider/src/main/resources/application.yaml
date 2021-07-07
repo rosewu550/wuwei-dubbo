@@ -10,7 +10,8 @@ dubbo:
   application:
     name: ${spring.application.name}
   registry:
-    address: nacos://127.0.0.1:5545
+#    address: nacos://127.0.0.1:5545
+    address: nacos://10.10.27.86:8858
 #    address: nacos://192.168.253.128:8848
   protocols:
     dubbo:

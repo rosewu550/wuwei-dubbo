@@ -12,42 +12,17 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
-      <ConfigTestElement guiclass="io.github.ningyu.jmeter.plugin.dubbo.gui.DubboDefaultConfigGui" testclass="ConfigTestElement" testname="Dubbo Config" enabled="true">
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_PROTOCOL"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_GROUP"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_NAMESPACE"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_USER_NAME"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_PASSWORD"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_ADDRESS"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONFIG_CENTER_TIMEOUT"></stringProp>
-        <stringProp name="FIELD_DUBBO_REGISTRY_PROTOCOL"></stringProp>
-        <stringProp name="FIELD_DUBBO_REGISTRY_GROUP"></stringProp>
-        <stringProp name="FIELD_DUBBO_REGISTRY_USER_NAME"></stringProp>
-        <stringProp name="FIELD_DUBBO_REGISTRY_PASSWORD"></stringProp>
-        <stringProp name="FIELD_DUBBO_ADDRESS"></stringProp>
-        <stringProp name="FIELD_DUBBO_REGISTRY_TIMEOUT"></stringProp>
-        <stringProp name="FIELD_DUBBO_RPC_PROTOCOL">dubbo://</stringProp>
-        <stringProp name="FIELD_DUBBO_TIMEOUT">1000</stringProp>
-        <stringProp name="FIELD_DUBBO_VERSION">1.0</stringProp>
-        <stringProp name="FIELD_DUBBO_RETRIES">0</stringProp>
-        <stringProp name="FIELD_DUBBO_GROUP"></stringProp>
-        <stringProp name="FIELD_DUBBO_CONNECTIONS">100</stringProp>
-        <stringProp name="FIELD_DUBBO_LOADBALANCE">random</stringProp>
-        <stringProp name="FIELD_DUBBO_ASYNC">sync</stringProp>
-        <stringProp name="FIELD_DUBBO_CLUSTER">failfast</stringProp>
-      </ConfigTestElement>
-      <hashTree/>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="线程组" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="循环控制器" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">1</stringProp>
+          <stringProp name="LoopController.loops">50</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.num_threads">5</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
-        <stringProp name="ThreadGroup.duration"></stringProp>
-        <stringProp name="ThreadGroup.delay"></stringProp>
+        <stringProp name="ThreadGroup.duration">30</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
       </ThreadGroup>
       <hashTree>
@@ -164,8 +139,8 @@
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="hessian上传文件测试" enabled="true">
           <elementProp name="HTTPsampler.Files" elementType="HTTPFileArgs">
             <collectionProp name="HTTPFileArgs.files">
-              <elementProp name="/Volumes/project/jmeter_project/100MB/Fiddler Everywhere 1.6.0.dmg" elementType="HTTPFileArg">
-                <stringProp name="File.path">/Volumes/project/jmeter_project/100MB/Fiddler Everywhere 1.6.0.dmg</stringProp>
+              <elementProp name="/Users/jmeter_project/大于1GB/ideaIU-2021.1.1.dmg" elementType="HTTPFileArg">
+                <stringProp name="File.path">/Users/jmeter_project/大于1GB/ideaIU-2021.1.1.dmg</stringProp>
                 <stringProp name="File.paramname">file</stringProp>
                 <stringProp name="File.mimetype"></stringProp>
               </elementProp>
@@ -185,17 +160,62 @@
           <stringProp name="HTTPSampler.port">5050</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/uploadByInputStream</stringProp>
+          <stringProp name="HTTPSampler.path">/uploadByBytes</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-          <boolProp name="HTTPSampler.DO_MULTIPART_POST">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
           <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
           <stringProp name="HTTPSampler.implementation">Java</stringProp>
           <stringProp name="HTTPSampler.connect_timeout"></stringProp>
           <stringProp name="HTTPSampler.response_timeout"></stringProp>
         </HTTPSamplerProxy>
+        <hashTree/>
+        <kg.apc.jmeter.vizualizers.CorrectedResultCollector guiclass="kg.apc.jmeter.vizualizers.TransactionsPerSecondGui" testclass="kg.apc.jmeter.vizualizers.CorrectedResultCollector" testname="jp@gc - Transactions per Second" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+          <longProp name="interval_grouping">1000</longProp>
+          <boolProp name="graph_aggregated">true</boolProp>
+          <stringProp name="include_sample_labels"></stringProp>
+          <stringProp name="exclude_sample_labels"></stringProp>
+          <stringProp name="start_offset"></stringProp>
+          <stringProp name="end_offset"></stringProp>
+          <boolProp name="include_checkbox_state">false</boolProp>
+          <boolProp name="exclude_checkbox_state">false</boolProp>
+        </kg.apc.jmeter.vizualizers.CorrectedResultCollector>
         <hashTree/>
       </hashTree>
     </hashTree>
