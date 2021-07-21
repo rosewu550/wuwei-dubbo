@@ -1,5 +1,7 @@
 server:
   port: 5050
+  tomcat:
+    basedir: F:\tomcat_project\temp
 
 spring:
   application:
@@ -18,5 +20,5 @@ dubbo:
     name: dubbo
   consumer:
     check: false
-    timeout: 3000
+    timeout: 30000
 

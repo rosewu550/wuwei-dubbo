@@ -90,7 +90,7 @@ public class UploadController {
             if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
-            uploadDemoService.uploadDocument(fileName, file.getBytes());
+            uploadDemoService.uploadDocumentByBytes(fileName, file.getBytes());
             msg = "uploadByBytes上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,11 +107,28 @@ public class UploadController {
             if (fileName.contains("..")) {
                 throw new Exception("文件名称无效：" + fileName);
             }
-            dubboUploadDemoService.uploadDocument(fileName, file.getBytes());
+            dubboUploadDemoService.uploadDocumentByBytes(fileName, file.getBytes());
             msg = "uploadByBytes上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
             msg = "uploadByBytes上传失败！";
+        }
+        return msg;
+    }
+
+    @PostMapping("/dubbo/uploadByInputStream")
+    public String uploadFileByInputStreamDubbo(@RequestParam("file") MultipartFile file) {
+        String msg;
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        try {
+            if (fileName.contains("..")) {
+                throw new Exception("文件名称无效：" + fileName);
+            }
+            dubboUploadDemoService.uploadDocumentByInputStream(fileName, file.getInputStream());
+            msg = "uploadByInputStream上传成功！";
+        } catch (Exception e) {
+            e.printStackTrace();
+            msg = "uploadByInputStream上传失败！";
         }
         return msg;
     }

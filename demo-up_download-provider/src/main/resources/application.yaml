@@ -1,5 +1,7 @@
 server:
   port: 5058
+  tomcat:
+    basedir: F:\tomcat_project\temp
 
 
 spring:

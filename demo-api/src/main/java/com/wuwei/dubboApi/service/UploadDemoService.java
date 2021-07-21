@@ -18,7 +18,7 @@ public interface UploadDemoService {
 
     void uploadDocument(String filename, File file);
 
-    void uploadDocument(String filename, byte[] fileBytes);
+    void uploadDocumentByBytes(String filename, byte[] fileBytes);
 
     void uploadDocumentByInputStream(String filename, InputStream inputStream);
 }

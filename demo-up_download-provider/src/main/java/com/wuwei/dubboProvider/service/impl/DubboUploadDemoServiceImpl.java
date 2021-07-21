@@ -11,6 +11,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Service(protocol = "dubbo",group = "dubbo",timeout = 30000)
@@ -37,7 +38,7 @@ public class DubboUploadDemoServiceImpl implements UploadDemoService {
      * 以字节数组的方式上传文件
      */
     @Override
-    public void uploadDocument(String filename, byte[] fileByte) {
+    public void uploadDocumentByBytes(String filename, byte[] fileByte) {
         try (
                 FileOutputStream fileOutputStream =
                         new FileOutputStream(processUploadFile(filename));
@@ -76,9 +77,9 @@ public class DubboUploadDemoServiceImpl implements UploadDemoService {
      * 对上传的内容进行处理，并生成File对象
      */
     private File processUploadFile(String filename) {
-        String uuid = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        filename = uuid + filename;
-        File uploadFileDirectory = new File(System.getProperty("user.dir") + File.separator + "upload/demo");
+        String uuid = UUID.randomUUID().toString();
+        filename = uuid;
+        File uploadFileDirectory = new File("G:\\jmeter_test_download");
         if (!uploadFileDirectory.exists() && !uploadFileDirectory.isDirectory()) {
             boolean isMkdirs = uploadFileDirectory.mkdirs();
             if (!isMkdirs) {

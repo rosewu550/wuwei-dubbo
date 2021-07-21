@@ -82,7 +82,7 @@ public class HessianUploadDemoServiceImpl implements UploadDemoService {
      * 以字节数组的方式上传文件
      */
     @Override
-    public void uploadDocument(String filename, byte[] fileByte) {
+    public void uploadDocumentByBytes(String filename, byte[] fileByte) {
         try (
                 FileOutputStream fileOutputStream =
                         new FileOutputStream(processUploadFile(filename));
@@ -114,8 +114,8 @@ public class HessianUploadDemoServiceImpl implements UploadDemoService {
      */
     private File processUploadFile(String filename) {
         String uuid = UUID.randomUUID().toString();
-        filename = uuid + filename;
-        File uploadFileDirectory = new File("/Volumes/download/dubbo_test_upload");
+        filename = uuid;
+        File uploadFileDirectory = new File("G:\\jmeter_test_download");
         if (!uploadFileDirectory.exists() && !uploadFileDirectory.isDirectory()) {
             boolean isMkdirs = uploadFileDirectory.mkdirs();
             if (!isMkdirs) {
