@@ -19,16 +19,18 @@ import java.io.InputStream;
 public class DownloadController {
     private final Logger logger = LoggerFactory.getLogger(DownloadController.class);
 
-    @Reference(protocol = "hessian", group = "hessian",timeout = 300000)
+    @Reference( group = "hessian",timeout = 300000)
     private DownloadDemoService downloadDemoService;
 
-    @Reference(protocol = "hessian", group = "dubbo")
+    @Reference(group = "dubbo")
     private DownloadDemoService dubboDownloadService;
 
     @GetMapping("/downloadInputStream")
     public void downloadFile(@RequestParam("path") String path, HttpServletResponse response) {
         try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
             InputStream inputStream = downloadDemoService.downloadDocument(path);
+            int read = inputStream.read();// 阻塞方法，等待流全部返回
+            logger.info(String.valueOf(read));
             byte[] bytes = new byte[4096];
             int length;
             while ((length = inputStream.read(bytes)) > 0) {
@@ -41,10 +43,24 @@ public class DownloadController {
         }
     }
 
+    @GetMapping("/downloadByte")
+    public void hessianDownFileByte(@RequestParam("path") String path,HttpServletResponse response){
+        try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
+            byte[] bytes = downloadDemoService.downloadDocumentByte(path);
+            servletOutputStream.write(bytes,0,bytes.length - 1);
+            logger.info("成功！");
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("失败，信息：{}", e.getMessage());
+        }
+
+    }
+
     @GetMapping("/dubbo/downloadInputStream")
     public void downloadFileByDubbo(@RequestParam("path") String path, HttpServletResponse response) {
         try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
-            InputStream inputStream = downloadDemoService.downloadDocument(path);
+            InputStream inputStream = dubboDownloadService.downloadDocument(path);
+            logger.info(String.valueOf(inputStream.available()));
             byte[] bytes = new byte[4096];
             int length;
             while ((length = inputStream.read(bytes)) > 0) {
@@ -55,6 +71,20 @@ public class DownloadController {
             e.printStackTrace();
             logger.error("失败，信息：{}", e.getMessage());
         }
+    }
+
+
+    @GetMapping("/dubbo/downloadByte")
+    public void duboDownFileByte(@RequestParam("path") String path,HttpServletResponse response){
+        try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
+            byte[] bytes = dubboDownloadService.downloadDocumentByte(path);
+            servletOutputStream.write(bytes,0,bytes.length - 1);
+            logger.info("成功！");
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("失败，信息：{}", e.getMessage());
+        }
+
     }
 
 }

@@ -16,9 +16,9 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">1</stringProp>
+          <stringProp name="LoopController.loops">100</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.num_threads">10</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
         <stringProp name="ThreadGroup.duration"></stringProp>
@@ -29,8 +29,8 @@
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="上传" enabled="false">
           <elementProp name="HTTPsampler.Files" elementType="HTTPFileArgs">
             <collectionProp name="HTTPFileArgs.files">
-              <elementProp name="E:\JMeter_project\100MB\SwitchHosts_installer_4.0.2.6057.exe" elementType="HTTPFileArg">
-                <stringProp name="File.path">E:\JMeter_project\100MB\SwitchHosts_installer_4.0.2.6057.exe</stringProp>
+              <elementProp name="E:\JMeter_project\1MB左右\参考简历模板一.png" elementType="HTTPFileArg">
+                <stringProp name="File.path">E:\JMeter_project\1MB左右\参考简历模板一.png</stringProp>
                 <stringProp name="File.paramname">file</stringProp>
                 <stringProp name="File.mimetype"></stringProp>
               </elementProp>
@@ -43,7 +43,7 @@
           <stringProp name="HTTPSampler.port">5050</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/dubbo/uploadByBytes</stringProp>
+          <stringProp name="HTTPSampler.path">/uploadByInputStream</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -179,7 +179,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="path" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">E%3A%5CJMeter_project%5C1MB%E5%B7%A6%E5%8F%B3%5C%E5%8F%82%E8%80%83%E7%AE%80%E5%8E%86%E6%A8%A1%E6%9D%BF%E4%B8%80.png</stringProp>
+                <stringProp name="Argument.value">E%3A%5CJMeter_project%5C100MB%5CSwitchHosts_installer_4.0.2.6057.exe</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
                 <boolProp name="HTTPArgument.use_equals">true</boolProp>
                 <stringProp name="Argument.name">path</stringProp>
@@ -190,7 +190,7 @@
           <stringProp name="HTTPSampler.port">5050</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/downloadInputStream</stringProp>
+          <stringProp name="HTTPSampler.path">/dubbo/downloadByte</stringProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>

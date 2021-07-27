@@ -36,6 +36,10 @@ public class HessianUploadDemoServiceImpl implements UploadDemoService {
     @Override
     public void uploadDocumentByInputStream(String filename, InputStream in) {
         try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(processUploadFile(filename)))) {
+            int read = in.read();
+            logger.info("read的大小：{}",String.valueOf(read));
+            int available = in.available();
+            logger.info("接收到的数据大小：{}",String.valueOf(available));
             int i;
             byte[] bytes = new byte[4 * 1024];
             BufferedInputStream bufferedInputStream = new BufferedInputStream(in);
