@@ -1,17 +1,22 @@
-package com.wuwei.dubboConsumer.controller;
+package com.wuwei.dubboconsumer.controller;
 
 import com.wuwei.dubboApi.entity.Document;
 import com.wuwei.dubboApi.service.DownloadDemoService;
 import com.wuwei.dubboApi.service.UploadDemoService;
+import com.wuwei.filestorage.entity.ResultDto;
+import com.wuwei.filestorage.entity.UploadModuleDto;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import com.wuwei.filestorage.service.upload.RestTemplateUpload;
 
 import java.io.File;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @RestController
@@ -148,6 +153,28 @@ public class UploadController {
             msg = "uploadByInputStream上传失败！";
         }
         return msg;
+    }
+
+    @PostMapping("/test")
+    public void test(@RequestParam("file") MultipartFile file) {
+        ResultDto upload2 = new RestTemplateUpload(file)
+                .init("b76c79d488e6ee77c56b7b44e6a54091", "wuwei", "im", 2131, "123123", "")
+                .upload2();
+
+        if (null != upload2 && upload2.isStatus()) {
+            System.out.println(upload2.getData());
+        }
+
+        ResultDto upload = new RestTemplateUpload(file)
+                .init("b76c79d488e6ee77c56b7b44e6a54091", "wuwei", "im", 2131, "123123", "")
+                .upload();
+        if (null != upload && upload.isStatus()) {
+            System.out.println(upload.getData());
+        }
+
+
+
+        System.out.println(upload);
     }
 
 

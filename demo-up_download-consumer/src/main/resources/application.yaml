@@ -6,6 +6,8 @@ server:
 
 
 spring:
+  profiles:
+    active: release
   application:
     name: demo-up_download-consumer
 

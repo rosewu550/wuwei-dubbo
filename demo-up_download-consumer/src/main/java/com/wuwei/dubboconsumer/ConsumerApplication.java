@@ -1,16 +1,21 @@
-package com.wuwei.dubboConsumer;
+package com.wuwei.dubboconsumer;
 
 import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import com.wuwei.filestorage.utils.SpringContextUtil;
 
-@SpringBootApplication
+
+@SpringBootApplication(scanBasePackages = "com.wuwei")
 @EnableDubbo
 public class ConsumerApplication extends SpringBootServletInitializer {
     public static void main(String[] args) {
-        SpringApplication.run(ConsumerApplication.class);
+        ConfigurableApplicationContext run = SpringApplication.run(ConsumerApplication.class);
+        SpringContextUtil springContextUtil = new SpringContextUtil();
+        springContextUtil.setApplicationContext(run);
     }
 
     /**
