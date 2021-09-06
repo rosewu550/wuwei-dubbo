@@ -1,0 +1,19 @@
+{
+  "outPath": "src/main/resources",
+  "serverUrl": "https://weapp.yunteams.cn",
+  "isStrict": false,
+  "packageFilters": "",
+  "projectName": "wuwei-dubbo",
+  "rpcApiDependencies": [
+    {
+      "artifactId": "wuwei-dubbo",
+      "groupId": "com.wuwei",
+      "version": "1.0.0"
+    }
+  ],
+  "appKey": "20210703860927677547151360",
+  "appToken": "41459926eae14268a614fc12d66ad6c9",
+  "secret": "aO~C#IiN%<UmLyhAhu$DO,vYv&9^@vhS",
+  "openUrl": "http://10.10.27.86:5000/api",
+  "debugEnvName": "测试环境"
+}
