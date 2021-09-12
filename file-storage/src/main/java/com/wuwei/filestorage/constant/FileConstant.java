@@ -9,4 +9,10 @@ public class FileConstant {
 
     public static final String DOWNLOAD_ENDPOINT = "/api/file/remotedownload/";
 
+    public static final String ETEAMS_ID = "ETEAMSID";
+
+    public static final String FILE = "file";
+
+    public static final String FILES = "files";
+
 }

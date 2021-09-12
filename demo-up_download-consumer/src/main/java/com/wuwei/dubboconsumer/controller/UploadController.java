@@ -1,10 +1,12 @@
 package com.wuwei.dubboconsumer.controller;
 
+
 import com.wuwei.dubboApi.entity.Document;
 import com.wuwei.dubboApi.service.DownloadDemoService;
 import com.wuwei.dubboApi.service.UploadDemoService;
 import com.wuwei.filestorage.entity.ResultDto;
 import com.wuwei.filestorage.entity.UploadModuleDto;
+import com.wuwei.filestorage.service.upload.WebClientUpload;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,12 +14,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.wuwei.filestorage.service.upload.RestTemplateUpload;
+import org.synchronoss.cloud.nio.multipart.Multipart;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 public class UploadController {
@@ -176,6 +181,15 @@ public class UploadController {
 
         System.out.println(upload);
     }
+
+    @PostMapping("/test2")
+    public void testWebclient(@RequestParam("file")MultipartFile file) throws InterruptedException {
+        String s = new WebClientUpload(file)
+                .init("5b0fc1e5a3a383b0035ec5a1b18378b8", "wuwei", "im", 2131, "123123", "")
+                .blockUpload();
+        System.out.println(s);
+    }
+
 
 
 }
