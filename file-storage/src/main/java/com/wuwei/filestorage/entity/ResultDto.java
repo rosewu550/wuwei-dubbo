@@ -1,7 +1,6 @@
 package com.wuwei.filestorage.entity;
 
 /**
- *
  * 请求结果
  *
  * @author wuwei
@@ -11,13 +10,12 @@ public class ResultDto {
 
     private int code;
 
+    private boolean status;
 
     private String message;
 
-
     private UploadModuleDto data;
 
-    private boolean status = false;
 
     public int getCode() {
         return code;
