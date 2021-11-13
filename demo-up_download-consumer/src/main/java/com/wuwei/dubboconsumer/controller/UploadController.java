@@ -186,7 +186,7 @@ public class UploadController {
     @PostMapping("/test2")
     public void testWebclient(@RequestParam("file")MultipartFile file) throws InterruptedException, IOException {
         ResultDto im = new WebClientUpload(file.getBytes())
-                .init("95ce6df30c635f72cccb4a21e3916cab", "wuwei.png", "im", 2131, "123123", "")
+                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
                 .blockUpload();
 //        System.out.println(
 //                im

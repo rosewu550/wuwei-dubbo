@@ -13,6 +13,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
@@ -105,31 +106,30 @@ public class WebClientUpload {
 
     private MultiValueMap<String, Object> bodyMap;
 
+    private MultipartBodyBuilder uploadBodyBuilder;
+
+
     private WebClientUpload() {
     }
 
     public WebClientUpload(MultipartFile file) {
-        MultiValueMap<String, Object> currentBodyMap = new LinkedMultiValueMap<>();
-        currentBodyMap.add(FileConstant.FILE, file.getResource());
-        this.bodyMap = currentBodyMap;
+        this.uploadBodyBuilder = new MultipartBodyBuilder();
+        this.uploadBodyBuilder.part(FileConstant.FILE,file.getResource());
     }
 
     public WebClientUpload(File file) {
-        MultiValueMap<String, Object> currentBodyMap = new LinkedMultiValueMap<>();
-        currentBodyMap.add(FileConstant.FILE, new FileSystemResource(file));
-        this.bodyMap = currentBodyMap;
+        this.uploadBodyBuilder = new MultipartBodyBuilder();
+        this.uploadBodyBuilder.part(FileConstant.FILE,new FileSystemResource(file));
     }
 
     public WebClientUpload(byte[] fileByteArray) {
-        MultiValueMap<String, Object> currentBodyMap = new LinkedMultiValueMap<>();
-        currentBodyMap.add(FileConstant.FILE, new ByteArrayResource(fileByteArray));
-        this.bodyMap = currentBodyMap;
+        this.uploadBodyBuilder = new MultipartBodyBuilder();
+        this.uploadBodyBuilder.part(FileConstant.FILE,new ByteArrayResource(fileByteArray));
     }
 
     public WebClientUpload(InputStream inputStream) {
-        MultiValueMap<String, Object> currentBodyMap = new LinkedMultiValueMap<>();
-        currentBodyMap.add(FileConstant.FILE, new InputStreamResource(inputStream));
-        this.bodyMap = currentBodyMap;
+        this.uploadBodyBuilder = new MultipartBodyBuilder();
+        this.uploadBodyBuilder.part(FileConstant.FILE,new InputStreamResource(inputStream));
     }
 
     public WebClientUpload(MultipartFile... files) {
@@ -218,19 +218,20 @@ public class WebClientUpload {
     private Mono<ResultDto> upload() {
         BeanMap beanMap = new BeanMap(this.assembleEntity());
         Set<Map.Entry<String, Object>> beanSet = beanMap.entrySet();
-        Map<String, List<Object>> collectMap = beanSet.stream()
+        beanSet.stream()
                 .filter(this::filterUploadBeanMap)
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> Collections.singletonList(entry.getValue())));
-        this.bodyMap.addAll(new LinkedMultiValueMap<>(collectMap));
+                .forEach(entry -> this.uploadBodyBuilder.part(entry.getKey(), entry.getValue()));
 
+        logger.info(">>>>>>webClientUpload start upload<<<<<<");
+        logger.info(">>>>>>webClientUpload current eteamsId:{}", this.eteamsId);
+        logger.info(">>>>>>webClientUpload current url:{}", FileUtils.getUploadUrl());
         return WebClient.builder()
                 .baseUrl(FileUtils.getUploadUrl())
                 .defaultCookie(FileConstant.ETEAMS_ID, this.eteamsId)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE)
                 .build()
                 .post()
-                .body(BodyInserters.fromMultipartData(this.bodyMap))
+                .body(BodyInserters.fromMultipartData(uploadBodyBuilder.build()))
                 .retrieve()
                 .bodyToMono(ResultDto.class);
     }
