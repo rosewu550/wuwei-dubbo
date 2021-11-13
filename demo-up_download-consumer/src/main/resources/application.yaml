@@ -7,7 +7,7 @@ server:
 
 spring:
   profiles:
-    active: release
+    active: develop
   application:
     name: demo-up_download-consumer
 

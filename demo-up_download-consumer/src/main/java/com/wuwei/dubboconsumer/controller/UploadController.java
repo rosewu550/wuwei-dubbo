@@ -5,7 +5,6 @@ import com.wuwei.dubboApi.entity.Document;
 import com.wuwei.dubboApi.service.DownloadDemoService;
 import com.wuwei.dubboApi.service.UploadDemoService;
 import com.wuwei.filestorage.entity.ResultDto;
-import com.wuwei.filestorage.entity.UploadModuleDto;
 import com.wuwei.filestorage.service.upload.WebClientUpload;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.util.StringUtils;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.wuwei.filestorage.service.upload.RestTemplateUpload;
-import org.synchronoss.cloud.nio.multipart.Multipart;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
@@ -162,6 +161,8 @@ public class UploadController {
 
     @PostMapping("/test")
     public void test(@RequestParam("file") MultipartFile file) {
+        file.getContentType();
+
         ResultDto upload2 = new RestTemplateUpload(file)
                 .init("b76c79d488e6ee77c56b7b44e6a54091", "wuwei", "im", 2131, "123123", "")
                 .upload2();
@@ -183,11 +184,17 @@ public class UploadController {
     }
 
     @PostMapping("/test2")
-    public void testWebclient(@RequestParam("file")MultipartFile file) throws InterruptedException {
-        String s = new WebClientUpload(file)
-                .init("c37deaa726a0ec707687277ff4906760", "wuwei.jpeg", "im", 2131, "123123", "")
+    public void testWebclient(@RequestParam("file")MultipartFile file) throws InterruptedException, IOException {
+        ResultDto im = new WebClientUpload(file.getBytes())
+                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
                 .blockUpload();
-        System.out.println(s);
+//        System.out.println(
+//                im
+//        );
+        System.out.println(im.getCode());
+        System.out.println(im.getMessage());
+        System.out.println(im.isStatus());
+        System.out.println(im.getData());
     }
 
 

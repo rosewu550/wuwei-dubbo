@@ -9,6 +9,7 @@
         <module>demo-up_download-consumer</module>
         <module>demo-up_download-provider</module>
         <module>demo-api</module>
+        <module>file-storage</module>
     </modules>
 
     <parent>
