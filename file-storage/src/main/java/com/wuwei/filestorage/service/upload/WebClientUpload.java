@@ -2,6 +2,7 @@ package com.wuwei.filestorage.service.upload;
 
 
 import com.wuwei.filestorage.constant.FileConstant;
+import com.wuwei.filestorage.entity.ResultDto;
 import com.wuwei.filestorage.entity.Upload4ModuleParam;
 import com.wuwei.filestorage.utils.FileUtils;
 import org.apache.commons.beanutils.BeanMap;
@@ -17,7 +18,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -203,24 +203,25 @@ public class WebClientUpload {
         return this;
     }
 
-//    public Flux<UploadModuleDto> unblockUpload() {
-//        return this.upload();
-//    }
+    public Mono<ResultDto> unblockUpload() {
+        return this.upload();
+    }
 
-    public String blockUpload() {
+    public ResultDto blockUpload() {
         return this.upload().block();
     }
 
-    public String blockUpload(long maxWaitTimeInSeconds) {
+    public ResultDto blockUpload(long maxWaitTimeInSeconds) {
         return this.upload().block(Duration.ofSeconds(maxWaitTimeInSeconds));
     }
 
-    private Mono<String> upload() {
+    private Mono<ResultDto> upload() {
         BeanMap beanMap = new BeanMap(this.assembleEntity());
         Set<Map.Entry<String, Object>> beanSet = beanMap.entrySet();
         Map<String, List<Object>> collectMap = beanSet.stream()
-                .filter(entry -> null != entry.getValue())
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> Collections.singletonList(entry.getValue())));
+                .filter(this::filterUploadBeanMap)
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        entry -> Collections.singletonList(entry.getValue())));
         this.bodyMap.addAll(new LinkedMultiValueMap<>(collectMap));
 
         return WebClient.builder()
@@ -231,7 +232,24 @@ public class WebClientUpload {
                 .post()
                 .body(BodyInserters.fromMultipartData(this.bodyMap))
                 .retrieve()
-                .bodyToMono(String.class);
+                .bodyToMono(ResultDto.class);
+    }
+
+
+
+    private boolean filterUploadBeanMap(Map.Entry<String,Object> entry){
+        boolean isSaveParam;
+        Object value = entry.getValue();
+        if (null == value) {
+            isSaveParam = false;
+        } else if (value instanceof Integer){
+            isSaveParam = 0 != (int)value;
+        } else if (value instanceof Long) {
+            isSaveParam = 0 != (long)value;
+        } else {
+            isSaveParam = true;
+        }
+        return isSaveParam;
     }
 
     private Upload4ModuleParam assembleEntity() {
