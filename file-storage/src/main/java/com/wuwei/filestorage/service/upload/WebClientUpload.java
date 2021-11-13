@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -108,28 +109,23 @@ public class WebClientUpload {
 
     private MultipartBodyBuilder uploadBodyBuilder;
 
-
     private WebClientUpload() {
     }
 
     public WebClientUpload(MultipartFile file) {
-        this.uploadBodyBuilder = new MultipartBodyBuilder();
-        this.uploadBodyBuilder.part(FileConstant.FILE,file.getResource());
+        this.assembleBuilder(file.getResource());
     }
 
     public WebClientUpload(File file) {
-        this.uploadBodyBuilder = new MultipartBodyBuilder();
-        this.uploadBodyBuilder.part(FileConstant.FILE,new FileSystemResource(file));
+        this.assembleBuilder(new FileSystemResource(file));
     }
 
     public WebClientUpload(byte[] fileByteArray) {
-        this.uploadBodyBuilder = new MultipartBodyBuilder();
-        this.uploadBodyBuilder.part(FileConstant.FILE,new ByteArrayResource(fileByteArray));
+        this.assembleBuilder(new ByteArrayResource(fileByteArray));
     }
 
     public WebClientUpload(InputStream inputStream) {
-        this.uploadBodyBuilder = new MultipartBodyBuilder();
-        this.uploadBodyBuilder.part(FileConstant.FILE,new InputStreamResource(inputStream));
+        this.assembleBuilder(new InputStreamResource(inputStream));
     }
 
     public WebClientUpload(MultipartFile... files) {
@@ -146,6 +142,13 @@ public class WebClientUpload {
             currentBodyMap.add(FileConstant.FILES, new FileSystemResource(file));
         }
         this.bodyMap = currentBodyMap;
+    }
+
+    private void assembleBuilder(Resource resource){
+        this.uploadBodyBuilder = new MultipartBodyBuilder();
+        String headerStr =  String.format("form-data; name=%s; filename=''", "file");
+        uploadBodyBuilder.part("file",resource).header("Content-Disposition",headerStr);
+
     }
 
     public WebClientUpload init(String eteamsId, String name, String module, long size, String lastModified, String lastModifiedDate) {

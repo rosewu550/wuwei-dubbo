@@ -188,9 +188,19 @@ public class UploadController {
         ResultDto im = new WebClientUpload(file.getBytes())
                 .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
                 .blockUpload();
-//        System.out.println(
-//                im
-//        );
+
+        ResultDto resultDto2 = new WebClientUpload(file)
+                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
+                .blockUpload();
+
+        ResultDto resultDto3 = new WebClientUpload(file.getInputStream())
+                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
+                .blockUpload();
+
+        ResultDto resultDto4 = new WebClientUpload(new File("/Volumes/other/下载/picture/image.png"))
+                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
+                .blockUpload();
+
         System.out.println(im.getCode());
         System.out.println(im.getMessage());
         System.out.println(im.isStatus());
