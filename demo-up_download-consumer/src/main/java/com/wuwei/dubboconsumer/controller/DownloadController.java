@@ -2,6 +2,7 @@ package com.wuwei.dubboconsumer.controller;
 
 
 import com.wuwei.dubboApi.service.DownloadDemoService;
+import com.wuwei.filestorage.service.download.WebClientDownload;
 import org.apache.dubbo.config.annotation.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 
 @RestController
 public class DownloadController {
     private final Logger logger = LoggerFactory.getLogger(DownloadController.class);
 
-    @Reference( group = "hessian",timeout = 300000)
+    @Reference(group = "hessian", timeout = 300000)
     private DownloadDemoService downloadDemoService;
 
     @Reference(group = "dubbo")
@@ -42,10 +44,10 @@ public class DownloadController {
     }
 
     @GetMapping("/downloadByte")
-    public void hessianDownFileByte(@RequestParam("path") String path,HttpServletResponse response){
+    public void hessianDownFileByte(@RequestParam("path") String path, HttpServletResponse response) {
         try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
             byte[] bytes = downloadDemoService.downloadDocumentByte(path);
-            servletOutputStream.write(bytes,0,bytes.length - 1);
+            servletOutputStream.write(bytes, 0, bytes.length - 1);
             logger.info("成功！");
         } catch (Exception e) {
             e.printStackTrace();
@@ -73,16 +75,28 @@ public class DownloadController {
 
 
     @GetMapping("/dubbo/downloadByte")
-    public void duboDownFileByte(@RequestParam("path") String path,HttpServletResponse response){
+    public void duboDownFileByte(@RequestParam("path") String path, HttpServletResponse response) {
         try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
             byte[] bytes = dubboDownloadService.downloadDocumentByte(path);
-            servletOutputStream.write(bytes,0,bytes.length - 1);
+            servletOutputStream.write(bytes, 0, bytes.length - 1);
             logger.info("成功！");
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("失败，信息：{}", e.getMessage());
         }
+    }
 
+    @GetMapping("/http/downloadInputStream")
+    public void testHttpDownload(@RequestParam("fileId") Long fileId, @RequestParam("eteamsId") String eteamsId, @RequestParam("module") String module) {
+        WebClientDownload webClientDownload = new WebClientDownload(fileId);
+        InputStream download = webClientDownload.init(eteamsId, module)
+                .download();
+        try {
+            int available = download.available();
+            System.out.println(available);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
