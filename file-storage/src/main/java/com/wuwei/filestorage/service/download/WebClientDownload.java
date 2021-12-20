@@ -1,6 +1,7 @@
 package com.wuwei.filestorage.service.download;
 
 
+import com.wuwei.filestorage.entity.DownloadResultDto;
 import com.wuwei.filestorage.utils.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,9 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.io.*;
+import java.util.function.Function;
 
 
 /**
@@ -66,8 +69,25 @@ public class WebClientDownload {
         this.module = module;
         return this;
     }
+//
+//    private Mono<DownloadResultDto<T>> download(Class<T> clazz) {
+//        logger.info(">>>>>>webClientDownload start download<<<<<<");
+//        logger.info(">>>>>>webClientDownload current eteamsId:{}", this.eteamsId);
+//        logger.info(">>>>>>webClientDownload current url:{}", FileUtils.getDownloadUrl(this.fileId));
+//
+//       WebClient.builder()
+//                .clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect(true)))
+//                .baseUrl(FileUtils.getDownloadUrl(this.fileId))
+//                .defaultCookie("ETEAMSID", this.eteamsId)
+//                .build()
+//                .get()
+//                .accept(MediaType.APPLICATION_OCTET_STREAM)
+//                .retrieve()
+//                .bodyToMono(DownloadResultDto.class)
+//                .map((Function<DownloadResultDto<?>, DownloadResultDto<T>>) DownloadResultDto::new);
+//    }
 
-    public InputStream download() {
+    public InputStream blockDownload() {
         logger.info(">>>>>>webClientDownload start download<<<<<<");
         logger.info(">>>>>>webClientDownload current eteamsId:{}", this.eteamsId);
         logger.info(">>>>>>webClientDownload current url:{}", FileUtils.getDownloadUrl(this.fileId));

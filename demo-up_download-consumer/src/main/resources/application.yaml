@@ -1,5 +1,5 @@
 server:
-  port: 5050
+  port: 5051
   tomcat:
     basedir: F:\tomcat_project\temp
   connection-timeout:  20000
@@ -25,4 +25,7 @@ dubbo:
   consumer:
     check: false
     timeout: 30000
+
+storage:
+  server:
 

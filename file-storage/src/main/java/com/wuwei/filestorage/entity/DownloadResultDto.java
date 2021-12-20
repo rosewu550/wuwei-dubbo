@@ -1,6 +1,6 @@
 package com.wuwei.filestorage.entity;
 
-import com.google.gson.Gson;
+
 
 /**
  * 请求结果
@@ -8,7 +8,7 @@ import com.google.gson.Gson;
  * @author wuwei
  * @since 2021/09/06
  */
-public class ResultDto<T> {
+public class DownloadResultDto<T> {
 
     private int code;
 
@@ -18,6 +18,16 @@ public class ResultDto<T> {
 
     private T data;
 
+    public DownloadResultDto(){}
+
+    public DownloadResultDto(DownloadResultDto<?> downloadResultDto,Class<?> clazz){
+       this.code = downloadResultDto.getCode();
+       this.status = downloadResultDto.isStatus();
+       this.message = downloadResultDto.getMessage();
+        Object objData = downloadResultDto.getData();
+
+        this.data = (T) objData;
+    }
 
     public int getCode() {
         return code;
@@ -49,14 +59,5 @@ public class ResultDto<T> {
 
     public void setData(T data) {
         this.data = data;
-    }
-
-    @Override
-    public String toString() {
-        return "ResultDto{" +
-                "code=" + code +
-                ", message='" + message + '\'' +
-                ", data='" + new Gson().toJson(data) + '\'' +
-                '}';
     }
 }

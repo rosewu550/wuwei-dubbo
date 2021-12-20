@@ -86,17 +86,17 @@ public class DownloadController {
         }
     }
 
-    @GetMapping("/http/downloadInputStream")
-    public void testHttpDownload(@RequestParam("fileId") Long fileId, @RequestParam("eteamsId") String eteamsId, @RequestParam("module") String module) {
-        WebClientDownload webClientDownload = new WebClientDownload(fileId);
-        InputStream download = webClientDownload.init(eteamsId, module)
-                .download();
-        try {
-            int available = download.available();
-            System.out.println(available);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    @GetMapping("/http/downloadInputStream")
+//    public void testHttpDownload(@RequestParam("fileId") Long fileId, @RequestParam("eteamsId") String eteamsId, @RequestParam("module") String module) {
+//        WebClientDownload webClientDownload = new WebClientDownload(fileId);
+//        InputStream download = webClientDownload.init(eteamsId, module)
+//                .download();
+//        try {
+//            int available = download.available();
+//            System.out.println(available);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 }

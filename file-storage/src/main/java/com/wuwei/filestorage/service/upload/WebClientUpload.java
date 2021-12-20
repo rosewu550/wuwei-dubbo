@@ -2,31 +2,27 @@ package com.wuwei.filestorage.service.upload;
 
 
 import com.wuwei.filestorage.constant.FileConstant;
-import com.wuwei.filestorage.entity.ResultDto;
-import com.wuwei.filestorage.entity.Upload4ModuleParam;
+import com.wuwei.filestorage.entity.*;
 import com.wuwei.filestorage.utils.FileUtils;
+import com.wuwei.filestorage.utils.FileWebClient;
 import org.apache.commons.beanutils.BeanMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * http请求快捷上传（基于webclient）
@@ -144,10 +140,10 @@ public class WebClientUpload {
         this.bodyMap = currentBodyMap;
     }
 
-    private void assembleBuilder(Resource resource){
+    private void assembleBuilder(Resource resource) {
         this.uploadBodyBuilder = new MultipartBodyBuilder();
-        String headerStr =  String.format("form-data; name=%s; filename=''", "file");
-        uploadBodyBuilder.part("file",resource).header("Content-Disposition",headerStr);
+        String headerStr = String.format("form-data; name=%s; filename=''", "file");
+        uploadBodyBuilder.part("file", resource).header("Content-Disposition", headerStr);
 
     }
 
@@ -206,19 +202,31 @@ public class WebClientUpload {
         return this;
     }
 
-    public Mono<ResultDto> unblockUpload() {
-        return this.upload();
+    public Mono<ResultDto<UploadModuleDto>> unblockUpload() {
+        return this.upload(new ParameterizedTypeReference<ResultDto<UploadModuleDto>>() {
+        });
     }
 
-    public ResultDto blockUpload() {
-        return this.upload().block();
+    public ResultDto<UploadModuleDto> blockUpload() {
+        return this.upload(new ParameterizedTypeReference<ResultDto<UploadModuleDto>>() {
+        }).block();
     }
 
-    public ResultDto blockUpload(long maxWaitTimeInSeconds) {
-        return this.upload().block(Duration.ofSeconds(maxWaitTimeInSeconds));
+    public <T> ResultDto<T> blockUpload(ParameterizedTypeReference<ResultDto<T>> typeReference) {
+        return this.upload(typeReference).block();
     }
 
-    private Mono<ResultDto> upload() {
+    public <T> ResultDto<T> blockUpload(ParameterizedTypeReference<ResultDto<T>> typeReference, long maxWaitTimeInSeconds) {
+        return this.upload(typeReference).block(Duration.ofSeconds(maxWaitTimeInSeconds));
+    }
+
+    public ResultDto<UploadModuleDto> blockUpload(long maxWaitTimeInSeconds) {
+        return this.upload(new ParameterizedTypeReference<ResultDto<UploadModuleDto>>() {
+                })
+                .block(Duration.ofSeconds(maxWaitTimeInSeconds));
+    }
+
+    private <T> Mono<ResultDto<T>> upload(ParameterizedTypeReference<ResultDto<T>> typeReference) {
         BeanMap beanMap = new BeanMap(this.assembleEntity());
         Set<Map.Entry<String, Object>> beanSet = beanMap.entrySet();
         beanSet.stream()
@@ -227,29 +235,25 @@ public class WebClientUpload {
 
         logger.info(">>>>>>webClientUpload start upload<<<<<<");
         logger.info(">>>>>>webClientUpload current eteamsId:{}", this.eteamsId);
-        logger.info(">>>>>>webClientUpload current url:{}", FileUtils.getUploadUrl());
-        return WebClient.builder()
-                .baseUrl(FileUtils.getUploadUrl())
-                .defaultCookie(FileConstant.ETEAMS_ID, this.eteamsId)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE)
-                .build()
-                .post()
-                .body(BodyInserters.fromMultipartData(uploadBodyBuilder.build()))
-                .retrieve()
-                .bodyToMono(ResultDto.class);
+        logger.info(">>>>>>webClientUpload current url:{}", FileUtils.getHost()+FileUtils.getUploadUrl());
+
+        return FileWebClient.upload(eteamsId, uploadBodyBuilder, typeReference);
     }
 
 
-
-    private boolean filterUploadBeanMap(Map.Entry<String,Object> entry){
+    private boolean filterUploadBeanMap(Map.Entry<String, Object> entry) {
         boolean isSaveParam;
+        String key = entry.getKey();
+        if ("chunk".equals(key)) {
+            return true;
+        }
         Object value = entry.getValue();
         if (null == value) {
             isSaveParam = false;
-        } else if (value instanceof Integer){
-            isSaveParam = 0 != (int)value;
+        } else if (value instanceof Integer) {
+            isSaveParam = 0 != (int) value;
         } else if (value instanceof Long) {
-            isSaveParam = 0 != (long)value;
+            isSaveParam = 0 != (long) value;
         } else {
             isSaveParam = true;
         }

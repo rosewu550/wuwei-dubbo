@@ -6,9 +6,9 @@ import com.google.gson.Gson;
  * 请求结果
  *
  * @author wuwei
- * @since 2021/09/06
+ * @since 2021/09/13 1m
  */
-public class ResultDto<T> {
+public class TestDto2<T> {
 
     private int code;
 
@@ -53,7 +53,7 @@ public class ResultDto<T> {
 
     @Override
     public String toString() {
-        return "ResultDto{" +
+        return "TestDto{" +
                 "code=" + code +
                 ", message='" + message + '\'' +
                 ", data='" + new Gson().toJson(data) + '\'' +

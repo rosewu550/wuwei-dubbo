@@ -6,9 +6,9 @@ import com.google.gson.Gson;
  * 请求结果
  *
  * @author wuwei
- * @since 2021/09/06
+ * @since 2021/09/13 1m
  */
-public class ResultDto<T> {
+public class TestDto {
 
     private int code;
 
@@ -16,7 +16,7 @@ public class ResultDto<T> {
 
     private String message;
 
-    private T data;
+    private ChunkUpCheckDto data;
 
 
     public int getCode() {
@@ -43,17 +43,17 @@ public class ResultDto<T> {
         this.message = message;
     }
 
-    public T getData() {
+    public ChunkUpCheckDto getData() {
         return data;
     }
 
-    public void setData(T data) {
+    public void setData(ChunkUpCheckDto data) {
         this.data = data;
     }
 
     @Override
     public String toString() {
-        return "ResultDto{" +
+        return "TestDto{" +
                 "code=" + code +
                 ", message='" + message + '\'' +
                 ", data='" + new Gson().toJson(data) + '\'' +

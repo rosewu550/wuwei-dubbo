@@ -1,15 +1,18 @@
 package com.wuwei.dubboconsumer.controller;
 
 
+import com.google.common.collect.Maps;
 import com.wuwei.dubboApi.entity.Document;
 import com.wuwei.dubboApi.service.DownloadDemoService;
 import com.wuwei.dubboApi.service.UploadDemoService;
 import com.wuwei.filestorage.entity.ResultDto;
+import com.wuwei.filestorage.service.upload.WebClientChunkUpload;
 import com.wuwei.filestorage.service.upload.WebClientUpload;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.wuwei.filestorage.service.upload.RestTemplateUpload;
@@ -20,8 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 public class UploadController {
@@ -179,34 +181,49 @@ public class UploadController {
         }
 
 
-
         System.out.println(upload);
     }
 
-    @PostMapping("/test2")
-    public void testWebclient(@RequestParam("file")MultipartFile file) throws InterruptedException, IOException {
-        ResultDto im = new WebClientUpload(file.getBytes())
-                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
-                .blockUpload();
+    @PostMapping("/testUpload")
+    @ResponseBody
+    public Map testUpload(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> map = Maps.newHashMapWithExpectedSize(2);
 
-        ResultDto resultDto2 = new WebClientUpload(file)
-                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
+        long startTime = System.currentTimeMillis();
+        ResultDto resultDto = null;
+        WebClientUpload webClientUpload = new WebClientUpload(file);
+        resultDto = webClientUpload.init("8c7f716f4dbf8cb0fded9d560669b11b",
+                        file.getOriginalFilename(), "document", file.getSize(), new Date().getTime() + "", "")
                 .blockUpload();
+        long endTime = System.currentTimeMillis();
+        map.put("code", resultDto.getCode());
+        map.put("time", endTime - startTime);
+        map.put("message", resultDto.getMessage());
 
-        ResultDto resultDto3 = new WebClientUpload(file.getInputStream())
-                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
-                .blockUpload();
-
-        ResultDto resultDto4 = new WebClientUpload(new File("/Volumes/other/下载/picture/image.png"))
-                .init("853aaf1c332d8d0cbfac857456ad9f53", "wuwei.png", "document", 2131, "123123", "")
-                .blockUpload();
-
-        System.out.println(im.getCode());
-        System.out.println(im.getMessage());
-        System.out.println(im.isStatus());
-        System.out.println(im.getData());
+        return map;
     }
 
+    @PostMapping("/testChunkUpload")
+    @ResponseBody
+    public Map testChunkUpload(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> map = Maps.newHashMapWithExpectedSize(2);
+
+        long startTime = System.currentTimeMillis();
+        ResultDto resultDto = null;
+        try {
+            WebClientChunkUpload webClientChunkUpload = new WebClientChunkUpload(file);
+            resultDto = webClientChunkUpload.init("8b5f690aa946575664ec8c54f8ae5e26",
+                            file.getOriginalFilename(), "document", file.getSize(), new Date().getTime() + "", "")
+                    .start();
+            long endTime = System.currentTimeMillis();
+            map.put("code", resultDto.getCode());
+            map.put("time", endTime - startTime);
+        } catch (Exception e) {
+            map.put("error", e);
+        }
+
+        return map;
+    }
 
 
 }
