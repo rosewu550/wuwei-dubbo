@@ -56,11 +56,12 @@ public class LocalStorageUploadController {
             }
             Map<String, String> uploadPartResultMap = storageStrategy.initiateMultipartUpload(tenantKey, fileId);
             String uploadId = uploadPartResultMap.get("uploadId");
+            String currentFileId = uploadPartResultMap.get("fileId");
 
             List<byte[]> partList = this.convertToChunk(file.getInputStream());
             int index = 0;
             for (byte[] partArray : partList) {
-                storageStrategy.uploadPart(tenantKey, fileId, uploadId, index++, partArray.length, new ByteArrayInputStream(partArray));
+                storageStrategy.uploadPart(tenantKey, currentFileId, uploadId, ++index, partArray.length, new ByteArrayInputStream(partArray));
             }
             msg = "上传成功！";
         } catch (Exception e) {

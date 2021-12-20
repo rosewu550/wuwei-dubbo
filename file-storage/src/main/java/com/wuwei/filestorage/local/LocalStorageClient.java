@@ -4,6 +4,7 @@ package com.wuwei.filestorage.local;
 import com.wuwei.filestorage.constant.StorageConstant;
 import com.wuwei.filestorage.utils.StorageUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -63,7 +64,7 @@ public class LocalStorageClient implements InitializingBean {
         try {
             // 在根目录下生成一个文件夹用于存放分片上传事件
             Path multipartEventPath = Paths.get(this.getUploadPartEventPathStr());
-            Files.createDirectory(multipartEventPath);
+            Files.createDirectories(multipartEventPath);
         } catch (FileAlreadyExistsException e) {
             logger.info(">>>>>>MULTIPART_EVENT folder is already exist<<<<<<");
         } catch (Exception ex) {
@@ -95,16 +96,17 @@ public class LocalStorageClient implements InitializingBean {
      */
     private void uploadFile(String fileName, String storagePathStr, Resource fileResource) {
         Path storagePath = Paths.get(storagePathStr);
-        OutputStream folderOutputStream = Optional.of(storagePath)
+        OutputStream targetFileOutputStream = Optional.of(storagePath)
                 .map(this::createMultiDirectory)
                 .filter(Files::exists)
                 .map(path -> path.resolve(fileName))
                 .map(this::getOutputStream)
                 .orElseThrow(() -> new RuntimeException("目标文件不存在"));
 
-        InputStream inputStream = this.getInputStream(fileResource);
-        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(folderOutputStream)) {
+        try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(targetFileOutputStream)) {
+            InputStream inputStream = fileResource.getInputStream();
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+
             int len;
             byte[] byteArray = new byte[4096];
             while ((len = bufferedInputStream.read(byteArray)) != -1) {
@@ -149,11 +151,10 @@ public class LocalStorageClient implements InitializingBean {
         String storagePath = this.rootPath + File.separator + "MULTIPART_EVENT" + File.separator + uploadId;
         try {
             Files.createFile(Paths.get(storagePath));
-            this.putFileToPath(new ByteArrayResource(new byte[0]), storagePath, fileId);
             // 生成分片上传临时存放点
-            String filePath = this.getFilePath(tenantKey, fileId) + File.separator;
+            String filePath = this.getTempPartFolderPathStr(tenantKey, fileId);
             Path partFolderPath = Paths.get(filePath);
-            Files.createDirectory(partFolderPath);
+            Files.createDirectories(partFolderPath);
         } catch (Exception e) {
             throw new RuntimeException(">>>>>>create temporary file part upload folder failed<<<<<< ", e);
         }
@@ -183,7 +184,6 @@ public class LocalStorageClient implements InitializingBean {
         }
 
         // 上传分片
-        String filePartPath = tempUploadPartFolderPath + File.separator + partNumber;
         this.uploadFile(partNumber + "", tempUploadPartFolderPath, new InputStreamResource(input));
         // 更新当前分片上传事件信息
         putPartUploadEvent(uploadId, partNumber + "", partSize + "", currentPartMD5);
@@ -343,7 +343,7 @@ public class LocalStorageClient implements InitializingBean {
         }
     }
 
-    private Path createMultiDirectory(Path path){
+    private Path createMultiDirectory(Path path) {
         try {
             return Files.createDirectories(path);
         } catch (IOException e) {
@@ -380,7 +380,7 @@ public class LocalStorageClient implements InitializingBean {
     private void createDirectory(String folderPath) {
         try {
             Path path = Paths.get(folderPath);
-            Files.createDirectory(path);
+            Files.createDirectories(path);
         } catch (FileAlreadyExistsException e) {
             logger.info(">>>>>>folderPath is already exist<<<<<<");
         } catch (Exception ex) {
@@ -406,8 +406,11 @@ public class LocalStorageClient implements InitializingBean {
         Path path = Paths.get(this.getUploadPartEventPathStr() + File.separator + uploadId);
         try (BufferedReader bufferedReader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return bufferedReader.lines()
-                    .filter(line -> !line.endsWith(";"))
-                    .map(line -> line.split(","))
+                    .filter(line -> line.endsWith(";"))
+                    .map(line -> {
+                        int length = line.length();
+                        return line.substring(0, length - 1);
+                    }).map(line -> line.split(","))
                     .filter(strArray -> strArray.length == 3)
                     .collect(toMap(
                             strArray -> strArray[0],
@@ -448,12 +451,13 @@ public class LocalStorageClient implements InitializingBean {
                     Path currentPath = uploadPartEntry.getKey();
                     String currentLineStr = uploadPartEntry.getValue();
                     try (FileChannel openFileChannel
-                                 = FileChannel.open(Files.createFile(currentPath), StandardOpenOption.WRITE)) {
+                                 = FileChannel.open(currentPath, StandardOpenOption.WRITE)) {
                         openFileChannel.lock();
                         byte[] lineStrByteArray = currentLineStr.getBytes(StandardCharsets.UTF_8);
                         byte[] lineSeparatorByteArray = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
-                        openFileChannel.write(ByteBuffer.wrap(lineStrByteArray));
-                        openFileChannel.write(ByteBuffer.wrap(lineSeparatorByteArray));
+                        FileChannel newPositionChannel = openFileChannel.position(openFileChannel.size());
+                        newPositionChannel.write(ByteBuffer.wrap(lineStrByteArray));
+                        newPositionChannel.write(ByteBuffer.wrap(lineSeparatorByteArray));
                     } catch (Exception e) {
                         throw new RuntimeException("write upload part meta failed:" + e);
                     }
