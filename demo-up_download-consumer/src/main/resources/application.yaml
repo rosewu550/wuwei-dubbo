@@ -1,5 +1,5 @@
 server:
-  port: 5051
+  port: 5052
   tomcat:
     basedir: F:\tomcat_project\temp
   connection-timeout:  20000

@@ -4,15 +4,14 @@ package com.wuwei.filestorage.local;
 import com.wuwei.filestorage.constant.StorageConstant;
 import com.wuwei.filestorage.utils.StorageUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.util.DigestUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -95,6 +94,15 @@ public class LocalStorageClient implements InitializingBean {
      * 向指定目标上传文件
      */
     private void uploadFile(String fileName, String storagePathStr, Resource fileResource) {
+        int read = 0;
+        InputStream inputStream1 = null;
+        try {
+            inputStream1 = fileResource.getInputStream();
+            read = inputStream1.read(new byte[1024]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Path storagePath = Paths.get(storagePathStr);
         OutputStream targetFileOutputStream = Optional.of(storagePath)
                 .map(this::createMultiDirectory)
@@ -105,13 +113,15 @@ public class LocalStorageClient implements InitializingBean {
 
         try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(targetFileOutputStream)) {
             InputStream inputStream = fileResource.getInputStream();
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+//            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
 
             int len;
-            byte[] byteArray = new byte[4096];
-            while ((len = bufferedInputStream.read(byteArray)) != -1) {
-                bufferedOutputStream.write(byteArray, 0, len);
-            }
+            byte[] byteArray = new byte[512 * 1024];
+//            int read = bufferedInputStream.read(byteArray);
+//            System.out.println(read);
+//            while ((len = bufferedInputStream.read(byteArray)) != -1) {
+//                bufferedOutputStream.write(byteArray, 0, len);
+//            }
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -148,7 +158,7 @@ public class LocalStorageClient implements InitializingBean {
     public String initMultipartUpload(String tenantKey, String fileId) {
         // 保存分片上传事件信息
         String uploadId = UUID.randomUUID().toString().replace("-", "");
-        String storagePath = this.rootPath + File.separator + "MULTIPART_EVENT" + File.separator + uploadId;
+        String storagePath = this.getUploadPartEventFilePathStr(uploadId);
         try {
             Files.createFile(Paths.get(storagePath));
             // 生成分片上传临时存放点
@@ -172,16 +182,23 @@ public class LocalStorageClient implements InitializingBean {
         this.createDirectory(tempUploadPartFolderPath);
         // 计算当前分片md5
         String currentPartMD5 = StorageUtils.calculateMD5(input);
+        int read = 0;
+        try {
+            read = input.read(new byte[1024]);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         // 查询当前分片上传事件的信息
         Map<String, Map<String, String>> uploadPartMap = getPartUploadEvent(uploadId);
         Map<String, String> uploadPartMetaMap = uploadPartMap.get(String.valueOf(partNumber));
         if (null != uploadPartMetaMap) {
             String partMD5 = uploadPartMetaMap.get(StorageConstant.MD5);
-            if (currentPartMD5.equals(partMD5)) {
-                // 该分片已存在，不用上传
-                return;
-            }
+//            if (currentPartMD5.equals(partMD5)) {
+//                // 该分片已存在，不用上传
+//                return;
+//            }
         }
+
 
         // 上传分片
         this.uploadFile(partNumber + "", tempUploadPartFolderPath, new InputStreamResource(input));
@@ -319,41 +336,28 @@ public class LocalStorageClient implements InitializingBean {
     }
 
 
-    private File getFile(Resource resource) {
-        try {
-            return resource.getFile();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private OutputStream getOutputStream(File file) {
-        try {
-            return FileUtils.openOutputStream(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private OutputStream getOutputStream(Path path) {
+        OutputStream newFileOutputStream = null;
         try {
-            return Files.newOutputStream(Files.createFile(path));
+            newFileOutputStream = Files.newOutputStream(Files.createFile(path));
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            try {
+                if (newFileOutputStream != null) {
+                    newFileOutputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
+        return newFileOutputStream;
     }
 
     private Path createMultiDirectory(Path path) {
         try {
             return Files.createDirectories(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private InputStream getInputStream(Resource resource) {
-        try {
-            return resource.getInputStream();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -385,17 +389,6 @@ public class LocalStorageClient implements InitializingBean {
             logger.info(">>>>>>folderPath is already exist<<<<<<");
         } catch (Exception ex) {
             throw new RuntimeException(folderPath + " create or check is failed<<<<<<", ex);
-        }
-    }
-
-    /**
-     * 仅检测文件夹是否存在
-     */
-    private void checkDirectory(String folderPath) {
-        Path path = Paths.get(folderPath);
-        boolean isExist = Files.isDirectory(path);
-        if (!isExist) {
-            throw new FileSystemNotFoundException(folderPath + "not found");
         }
     }
 

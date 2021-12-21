@@ -74,10 +74,10 @@ public class LocalStorageUploadController {
     private List<byte[]> convertToChunk(InputStream inputStream) {
         List<byte[]> chunkList = new ArrayList<>();
         try {
-            byte[] chunkByteArray = new byte[1 * 1024 * 1024];
+            byte[] chunkByteArray = new byte[1024 * 1024];
             while (inputStream.read(chunkByteArray) != -1) {
                 chunkList.add(chunkByteArray);
-                chunkByteArray = new byte[1 * 1024 * 1024];
+                chunkByteArray = new byte[1024 * 1024];
             }
         } catch (IOException e) {
             e.printStackTrace();
