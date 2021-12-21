@@ -94,37 +94,23 @@ public class LocalStorageClient implements InitializingBean {
      * 向指定目标上传文件
      */
     private void uploadFile(String fileName, String storagePathStr, Resource fileResource) {
-        int read = 0;
-        InputStream inputStream1 = null;
-        try {
-            inputStream1 = fileResource.getInputStream();
-            read = inputStream1.read(new byte[1024]);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         Path storagePath = Paths.get(storagePathStr);
-        OutputStream targetFileOutputStream = Optional.of(storagePath)
+        Path targetFilePath = Optional.of(storagePath)
                 .map(this::createMultiDirectory)
                 .filter(Files::exists)
                 .map(path -> path.resolve(fileName))
-                .map(this::getOutputStream)
-                .orElseThrow(() -> new RuntimeException("目标文件不存在"));
+                .orElseThrow(() -> new RuntimeException("target file is not exist"));
 
-        try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(targetFileOutputStream)) {
-            InputStream inputStream = fileResource.getInputStream();
-//            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-
+        try (InputStream inputStream = fileResource.getInputStream();
+             BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(Files.newOutputStream(targetFilePath))) {
             int len;
-            byte[] byteArray = new byte[512 * 1024];
-//            int read = bufferedInputStream.read(byteArray);
-//            System.out.println(read);
-//            while ((len = bufferedInputStream.read(byteArray)) != -1) {
-//                bufferedOutputStream.write(byteArray, 0, len);
-//            }
-
+            byte[] bytes = new byte[4096];
+            while ((len = bufferedInputStream.read(bytes)) != -1) {
+                bufferedOutputStream.write(bytes, 0, len);
+            }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("part write stream failed", e);
         }
     }
 
@@ -180,28 +166,11 @@ public class LocalStorageClient implements InitializingBean {
         String tempUploadPartFolderPath = this.getTempPartFolderPathStr(tenantKey, fileId);
         // 分片临时存放文件夹是否存在，不存在则创建
         this.createDirectory(tempUploadPartFolderPath);
-        // 计算当前分片md5
-        String currentPartMD5 = StorageUtils.calculateMD5(input);
-        int read = 0;
-        try {
-            read = input.read(new byte[1024]);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // 查询当前分片上传事件的信息
-        Map<String, Map<String, String>> uploadPartMap = getPartUploadEvent(uploadId);
-        Map<String, String> uploadPartMetaMap = uploadPartMap.get(String.valueOf(partNumber));
-        if (null != uploadPartMetaMap) {
-            String partMD5 = uploadPartMetaMap.get(StorageConstant.MD5);
-//            if (currentPartMD5.equals(partMD5)) {
-//                // 该分片已存在，不用上传
-//                return;
-//            }
-        }
-
-
+        // TODO 校验分片MD5值，相同则直接返回
         // 上传分片
         this.uploadFile(partNumber + "", tempUploadPartFolderPath, new InputStreamResource(input));
+        // 上传成功后计算当前分片md5
+        String currentPartMD5 = StorageUtils.calculateMD5(this.getTempPartFilePathStr(tenantKey, fileId, partNumber + ""));
         // 更新当前分片上传事件信息
         putPartUploadEvent(uploadId, partNumber + "", partSize + "", currentPartMD5);
     }
@@ -215,15 +184,21 @@ public class LocalStorageClient implements InitializingBean {
 
         // 获取当前分片上传的所有分片信息
         Map<String, Map<String, String>> uploadPartMap = this.getPartUploadEvent(uploadId);
-        uploadPartMap = uploadPartMap.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByKey())
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue));
+        TreeMap<String, Object> ascTreeMap = new TreeMap<>(this::ascSort);
+        ascTreeMap.putAll(uploadPartMap);
         // 校验记录的分片上传事件中序列号是否连续递增
-        List<String> partNumberAscList = new ArrayList<>(uploadPartMap.keySet());
+        List<String> partNumberAscList = new ArrayList<>(ascTreeMap.keySet());
         validatePartNum(partNumberAscList);
         // 开始合并
         this.mergePartFile(tempPartFolderPathStr, targetFolderPathStr, uploadPartMap);
+        // 删除分片临时文件夹
+        this.deleteDirectoryAndSub(tempPartFolderPathStr);
+    }
+
+    public int ascSort(String a, String b) {
+        Integer integerA = Integer.valueOf(a);
+        Integer integerB = Integer.valueOf(b);
+        return integerA.compareTo(integerB);
     }
 
     /**
@@ -233,17 +208,28 @@ public class LocalStorageClient implements InitializingBean {
         String currentPartEventFilePathStr = this.getUploadPartEventFilePathStr(uploadId);
         Path currentPartEventFilePath = Paths.get(currentPartEventFilePathStr);
         String tempUploadPartFilePath = this.getTempPartFolderPathStr(tenantKey, fileId);
-        Path allPartPath = Paths.get(tempUploadPartFilePath);
-        try (FileChannel fileChannel = FileChannel.open(allPartPath);
-             Stream<Path> walk = Files.walk(allPartPath)) {
-            fileChannel.lock();
-            boolean isDelete = Files.deleteIfExists(currentPartEventFilePath);
-            if (isDelete && Files.isDirectory(allPartPath)) {
-                walk.map(Path::toFile).forEach(File::deleteOnExit);
+        boolean isDelete = false;
+        try {
+            isDelete = Files.deleteIfExists(currentPartEventFilePath);
+        } catch (IOException e) {
+            throw new RuntimeException("delete upload part event failed" + e);
+        }
+        if (isDelete) {
+            this.deleteDirectoryAndSub(tempUploadPartFilePath);
+        }
+    }
+
+    private void deleteDirectoryAndSub(String pathStr) {
+        Path allPartPath = Paths.get(pathStr);
+        try (Stream<Path> walk = Files.walk(allPartPath)) {
+            if (Files.isDirectory(allPartPath)) {
+                walk.map(Path::toFile).forEach(File::delete);
+                Files.deleteIfExists(allPartPath);
             }
         } catch (Exception e) {
-            throw new RuntimeException("abort multipart upload is failed", e);
+            throw new RuntimeException("delete folder and subFile is failed", e);
         }
+
     }
 
     /**
@@ -305,7 +291,9 @@ public class LocalStorageClient implements InitializingBean {
         String[] uploadPartNameArray = tempPartFolder.list();
         argNotNull(null == uploadPartNameArray, "upload part is not exist");
         List<String> ascUploadPartNameList = Arrays.stream(uploadPartNameArray)
+                .map(Integer::valueOf)
                 .sorted()
+                .map(String::valueOf)
                 .collect(toList());
         // 校验磁盘中物理分片文件序列号是否连续递增
         this.validatePartNum(ascUploadPartNameList);
@@ -327,32 +315,11 @@ public class LocalStorageClient implements InitializingBean {
                 targetFileOpenChannel
                         .position(position)
                         .write(ByteBuffer.wrap(uploadPartByteArray));
-                position = len <= 0 ? 0 : len - 1;
+                position += len;
             }
         } catch (Exception e) {
             throw new RuntimeException("merge part failed", e);
         }
-
-    }
-
-
-    private OutputStream getOutputStream(Path path) {
-        OutputStream newFileOutputStream = null;
-        try {
-            newFileOutputStream = Files.newOutputStream(Files.createFile(path));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            try {
-                if (newFileOutputStream != null) {
-                    newFileOutputStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return newFileOutputStream;
     }
 
     private Path createMultiDirectory(Path path) {
@@ -468,6 +435,10 @@ public class LocalStorageClient implements InitializingBean {
      */
     private String getTempPartFolderPathStr(String tenantKey, String fileId) {
         return this.getFilePath(tenantKey, fileId) + "-folder";
+    }
+
+    private String getTempPartFilePathStr(String tenantKey, String fileId, String partNumber) {
+        return this.getTempPartFolderPathStr(tenantKey, fileId) + File.separator + partNumber;
     }
 
     /**

@@ -63,6 +63,8 @@ public class LocalStorageUploadController {
             for (byte[] partArray : partList) {
                 storageStrategy.uploadPart(tenantKey, currentFileId, uploadId, ++index, partArray.length, new ByteArrayInputStream(partArray));
             }
+            Map<String, String> stringStringMap = storageStrategy.completeMultipartUpload(tenantKey, currentFileId, uploadId);
+            System.out.println(stringStringMap);
             msg = "上传成功！";
         } catch (Exception e) {
             e.printStackTrace();
