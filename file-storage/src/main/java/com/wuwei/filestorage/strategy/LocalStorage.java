@@ -65,9 +65,7 @@ public class LocalStorage implements LocalStorageStrategy {
 
     @Override
     public int deleteFile(String fileId, String tenantKey) throws Exception {
-        String filePathStr = localStorageClient.getFilePath(fileId, tenantKey);
-        Path filePath = Paths.get(filePathStr);
-        Files.delete(filePath);
+        localStorageClient.deleteFile(fileId, tenantKey);
         return 0;
     }
 

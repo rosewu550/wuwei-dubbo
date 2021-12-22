@@ -1,5 +1,6 @@
 package com.wuwei.filestorage.utils;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
@@ -11,6 +12,14 @@ import java.nio.file.Paths;
 
 public class StorageUtils {
     private StorageUtils() {
+    }
+
+    /**
+     * 计算文件md5值
+     */
+    public static String calculateMD5(byte[] byteArray) {
+        // 计算文件md5值
+        return DigestUtils.md5DigestAsHex(byteArray);
     }
 
     /**
@@ -41,5 +50,6 @@ public class StorageUtils {
             throw new RuntimeException("calculate inputStream md5 failed", e);
         }
     }
+
 
 }

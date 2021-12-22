@@ -4,14 +4,14 @@ package com.wuwei.filestorage.local;
 import com.wuwei.filestorage.constant.StorageConstant;
 import com.wuwei.filestorage.utils.StorageUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.util.DigestUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -75,19 +75,35 @@ public class LocalStorageClient implements InitializingBean {
      * 获取文件全路径
      */
     public String getFilePath(String tenantKey, String filename) {
-        return File.separator + this.rootPath
-                + File.separator + tenantKey
-                + File.separator + this.module
-                + File.separator + filename;
+        String filePath;
+        String firstPath = File.separator + this.rootPath
+                + File.separator + tenantKey;
+        if (this.module != null) {
+            filePath = firstPath
+                    + File.separator + this.module
+                    + File.separator + filename;
+        } else {
+            filePath = firstPath
+                    + File.separator + filename;
+        }
+
+        return filePath;
     }
 
     /**
      * 获取文件所在文件夹路径
      */
     public String getFolderPath(String tenantKey) {
-        return File.separator + this.rootPath
-                + File.separator + tenantKey
-                + File.separator + this.module;
+        String folderPath;
+        String firstPath = File.separator + this.rootPath
+                + File.separator + tenantKey;
+        if (null != this.module) {
+            folderPath = firstPath
+                    + File.separator + this.module;
+        } else {
+            folderPath = firstPath;
+        }
+        return folderPath;
     }
 
     /**
@@ -129,13 +145,27 @@ public class LocalStorageClient implements InitializingBean {
     public String copyFile(String tenantKey, String sourceFileId, String destinationFolderPath) {
         String sourceFilePath = this.getFilePath(tenantKey, sourceFileId);
         String uuid = UUID.randomUUID().toString().replace("-", "");
-        String destFilePath = destinationFolderPath + File.separator + uuid;
-        try (FileOutputStream destOutputStream = new FileOutputStream(new File(destFilePath))) {
-            FileUtils.copyFile(new File(sourceFilePath), destOutputStream);
+        String destFilePathStr = this.getFilePath(destinationFolderPath, uuid);
+        Path destFilePath = Paths.get(destFilePathStr);
+        try (OutputStream outputStream = Files.newOutputStream(Files.createFile(destFilePath));) {
+            FileUtils.copyFile(new File(sourceFilePath), outputStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return uuid;
+    }
+
+    public void deleteFile(String fileId, String tenantKey) {
+        String filePathStr = this.getFilePath(tenantKey, fileId);
+        Path filePath = Paths.get(filePathStr);
+        boolean exists = Files.exists(filePath);
+        if (exists) {
+            try {
+                Files.delete(filePath);
+            } catch (IOException e) {
+                throw new RuntimeException("delete file failed", e);
+            }
+        }
     }
 
     /**
@@ -166,11 +196,22 @@ public class LocalStorageClient implements InitializingBean {
         String tempUploadPartFolderPath = this.getTempPartFolderPathStr(tenantKey, fileId);
         // 分片临时存放文件夹是否存在，不存在则创建
         this.createDirectory(tempUploadPartFolderPath);
-        // TODO 校验分片MD5值，相同则直接返回
+        // 复制两份，一份用于计算md5,一份用于上传
+        byte[] copyByteArray = this.temporaryCopyInputStream(input);
+        // 计算当前分片md5
+        String currentPartMD5 = StorageUtils.calculateMD5(copyByteArray);
+        // 查询当前分片上传事件的信息
+        Map<String, Map<String, String>> uploadPartMap = getPartUploadEvent(uploadId);
+        Map<String, String> uploadPartMetaMap = uploadPartMap.get(String.valueOf(partNumber));
+        if (null != uploadPartMetaMap) {
+            String partMD5 = uploadPartMetaMap.get(StorageConstant.MD5);
+            if (currentPartMD5.equals(partMD5)) {
+                // 该分片已存在，不用上传
+                return;
+            }
+        }
         // 上传分片
-        this.uploadFile(partNumber + "", tempUploadPartFolderPath, new InputStreamResource(input));
-        // 上传成功后计算当前分片md5
-        String currentPartMD5 = StorageUtils.calculateMD5(this.getTempPartFilePathStr(tenantKey, fileId, partNumber + ""));
+        this.uploadFile(partNumber + "", tempUploadPartFolderPath, new ByteArrayResource(copyByteArray));
         // 更新当前分片上传事件信息
         putPartUploadEvent(uploadId, partNumber + "", partSize + "", currentPartMD5);
     }
@@ -238,11 +279,7 @@ public class LocalStorageClient implements InitializingBean {
     public Map<String, Map<String, String>> listParts(String tenantKey, String fileId, String uploadId) {
         String uploadPartFolderPathStr = this.getTempPartFolderPathStr(tenantKey, fileId);
         Map<String, Map<String, String>> uploadPartMap = this.getPartUploadEvent(uploadId);
-        uploadPartMap = uploadPartMap.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByKey())
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue));
-        return uploadPartMap.entrySet()
+        uploadPartMap.entrySet()
                 .stream()
                 .filter(entry -> {
                     String partNumber = entry.getKey();
@@ -251,7 +288,9 @@ public class LocalStorageClient implements InitializingBean {
                     String partFilePathStr = uploadPartFolderPathStr + File.separator + partNumber;
                     return validatePart(partFilePathStr, partMD5);
                 }).collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> newValue));
-
+        TreeMap<String, Map<String, String>> ascTreeMap = new TreeMap<>(this::ascSort);
+        ascTreeMap.putAll(uploadPartMap);
+        return ascTreeMap;
     }
 
     /**
@@ -266,6 +305,9 @@ public class LocalStorageClient implements InitializingBean {
         }
     }
 
+    /**
+     * 校验分片md5值（流会被用完）
+     */
     private boolean validatePart(String partFilePathStr, String currentPartMD5) {
         Path path = Paths.get(partFilePathStr);
         try (InputStream inputStream = Files.newInputStream(path)) {
@@ -450,5 +492,21 @@ public class LocalStorageClient implements InitializingBean {
 
     private String getUploadPartEventFilePathStr(String uploadId) {
         return this.rootPath + File.separator + "MULTIPART_EVENT" + File.separator + uploadId;
+    }
+
+    private byte[] temporaryCopyInputStream(InputStream inputStream) {
+        try {
+            return IOUtils.toByteArray(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException("copy inputStream to byte[] failed", e);
+        } finally {
+            if (null != inputStream) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

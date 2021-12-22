@@ -63,7 +63,11 @@ public class LocalStorageUploadController {
             for (byte[] partArray : partList) {
                 storageStrategy.uploadPart(tenantKey, currentFileId, uploadId, ++index, partArray.length, new ByteArrayInputStream(partArray));
             }
+            String s = storageStrategy.listParts(tenantKey, currentFileId, uploadId);
+//            storageStrategy.abortMultipartUpload(tenantKey, currentFileId, uploadId);
             Map<String, String> stringStringMap = storageStrategy.completeMultipartUpload(tenantKey, currentFileId, uploadId);
+            String copyFileId = storageStrategy.copyFile(currentFileId, tenantKey, tenantKey);
+            int i = storageStrategy.deleteFile(copyFileId, tenantKey);
             System.out.println(stringStringMap);
             msg = "上传成功！";
         } catch (Exception e) {
