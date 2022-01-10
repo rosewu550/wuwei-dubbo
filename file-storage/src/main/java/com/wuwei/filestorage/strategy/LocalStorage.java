@@ -13,9 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * 本地存储实现
@@ -24,12 +24,13 @@ import java.util.UUID;
  * @since 2021/12/15
  */
 @Service
-public class LocalStorage implements LocalStorageStrategy {
+public class LocalStorage implements StorageStrategy {
 
     @Autowired
     private LocalStorageClient localStorageClient;
 
-    private LocalStorage() {
+
+    public LocalStorage() {
     }
 
     public LocalStorage(LocalStorageClient localStorageClient) {
@@ -60,8 +61,9 @@ public class LocalStorage implements LocalStorageStrategy {
 
     @Override
     public InputStream getFile(String fileId, String tenantKey) throws Exception {
-        return localStorageClient.downloadFile(fileId, tenantKey);
+        return localStorageClient.downloadFile(tenantKey, fileId);
     }
+
 
     @Override
     public int deleteFile(String fileId, String tenantKey) throws Exception {
@@ -91,7 +93,7 @@ public class LocalStorage implements LocalStorageStrategy {
      */
     @Override
     public Map<String, String> initiateMultipartUpload(String tenantKey, String fileName) {
-        String fileId = UUID.randomUUID().toString().replace("-", "");
+        String fileId = localStorageClient.getLocalUUID();
         String uploadId = localStorageClient.initMultipartUpload(tenantKey, fileId);
         Map<String, String> resultMap = new HashMap<>();
         resultMap.put("fileId", fileId);
@@ -102,17 +104,19 @@ public class LocalStorage implements LocalStorageStrategy {
 
     @Override
     public Map<String, String> uploadPart(String tenantKey, String fileId, String uploadId, int partNumber, long partSize, InputStream input) {
-        localStorageClient.uploadPart(tenantKey, fileId, uploadId, partNumber, partSize, input);
+        Map<String, Object> localPartResultMap = localStorageClient.uploadPart(tenantKey, fileId, uploadId, partNumber, partSize, input);
+        String jsonStr = JSON.toJSONString(localPartResultMap);
         Map<String, String> resultMap = new HashMap<>();
-        resultMap.put("UploadPartResult", "success");
+        resultMap.put("UploadPartResult", jsonStr);
         return resultMap;
     }
 
     @Override
     public Map<String, String> completeMultipartUpload(String tenantKey, String fileId, String uploadId) {
-        localStorageClient.mergePart(tenantKey, fileId, uploadId);
+        Map<String, Object> mergePartMap = localStorageClient.mergePart(tenantKey, fileId, uploadId);
+        String jsonStr = JSON.toJSONString(mergePartMap);
         Map<String, String> map = new HashMap<>();
-        map.put("CompleteMultipartUploadResult", "success");
+        map.put("CompleteMultipartUploadResult", jsonStr);
         return map;
     }
 
@@ -125,5 +129,15 @@ public class LocalStorage implements LocalStorageStrategy {
     public String listParts(String tenantKey, String fileId, String uploadId) {
         Map<String, Map<String, String>> partsMap = localStorageClient.listParts(tenantKey, fileId, uploadId);
         return JSON.toJSONString(partsMap);
+    }
+
+    @Override
+    public String generatePresignedUrl(String tenantKey, String fileId, String bucketName, String fileName, Date expiration) {
+        return localStorageClient.generatePresignedUrl(tenantKey, fileId);
+    }
+
+    @Override
+    public String generatePresignedUrl(String tenantKey, String fileId, Date expiration, String fileName) {
+        return localStorageClient.generatePresignedUrl(tenantKey, fileId);
     }
 }

@@ -4,7 +4,6 @@ package com.wuwei.filestorage.local;
 import com.wuwei.filestorage.constant.StorageConstant;
 import com.wuwei.filestorage.utils.StorageUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -22,22 +21,23 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-
+import static java.util.stream.Collectors.*;
 
 @Configuration
 public class LocalStorageClient implements InitializingBean {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Value("${storage.server.appKey}")
+    @Value("${${storage.server}.appKey:eteams}")
     private String appKey;
 
-    @Value("${storage.server.module}")
+    @Value("${${storage.server}.module:eteams}")
     private String module;
 
-    private final String rootPath = System.getProperty("user.dir") + File.separator + "upload/storage";
+    private String rootPath = System.getProperty("user.dir") + File.separator + "upload/storage";
+
+    @Value("${storage.download.host:https://weapp.yunteams.cn}")
+    private String downloadHost;
 
     private static final LinkedBlockingQueue<Map<Path, String>> uploadPartMetaStrQueue = new LinkedBlockingQueue<>();
 
@@ -45,21 +45,20 @@ public class LocalStorageClient implements InitializingBean {
         return appKey;
     }
 
-    public String getModule() {
-        return module;
-    }
-
-    public void setModule(String module) {
-        this.module = module;
+    public void setAppKey(String appKey) {
+        this.appKey = appKey;
     }
 
     public String getRootPath() {
         return rootPath;
     }
 
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
-
         try {
             // 在根目录下生成一个文件夹用于存放分片上传事件
             Path multipartEventPath = Paths.get(this.getUploadPartEventPathStr());
@@ -78,7 +77,7 @@ public class LocalStorageClient implements InitializingBean {
         String filePath;
         String firstPath = File.separator + this.rootPath
                 + File.separator + tenantKey;
-        if (this.module != null) {
+        if (null != this.module) {
             filePath = firstPath
                     + File.separator + this.module
                     + File.separator + filename;
@@ -130,12 +129,17 @@ public class LocalStorageClient implements InitializingBean {
         }
     }
 
+    /**
+     * 下载文件
+     */
     public InputStream downloadFile(String tenantKey, String fileId) {
-        String filePath = this.getFilePath(tenantKey, fileId);
-        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
-            return new BufferedInputStream(fileInputStream);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        String filePathStr = this.getFilePath(tenantKey, fileId);
+        Path filePath = Paths.get(filePathStr);
+        try {
+            byte[] fileByteArray = Files.readAllBytes(filePath);
+            return new ByteArrayInputStream(fileByteArray);
+        } catch (IOException e) {
+            throw new RuntimeException("download file failed");
         }
     }
 
@@ -144,10 +148,10 @@ public class LocalStorageClient implements InitializingBean {
      */
     public String copyFile(String tenantKey, String sourceFileId, String destinationFolderPath) {
         String sourceFilePath = this.getFilePath(tenantKey, sourceFileId);
-        String uuid = UUID.randomUUID().toString().replace("-", "");
+        String uuid = this.getLocalUUID();
         String destFilePathStr = this.getFilePath(destinationFolderPath, uuid);
         Path destFilePath = Paths.get(destFilePathStr);
-        try (OutputStream outputStream = Files.newOutputStream(Files.createFile(destFilePath));) {
+        try (OutputStream outputStream = Files.newOutputStream(Files.createFile(destFilePath))) {
             FileUtils.copyFile(new File(sourceFilePath), outputStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -155,6 +159,9 @@ public class LocalStorageClient implements InitializingBean {
         return uuid;
     }
 
+    /**
+     * 删除文件
+     */
     public void deleteFile(String fileId, String tenantKey) {
         String filePathStr = this.getFilePath(tenantKey, fileId);
         Path filePath = Paths.get(filePathStr);
@@ -190,16 +197,21 @@ public class LocalStorageClient implements InitializingBean {
     /**
      * 上传分片
      */
-    public void uploadPart(String tenantKey, String fileId, String uploadId, int partNumber, long partSize, InputStream input) {
+    public Map<String, Object> uploadPart(String tenantKey, String fileId, String uploadId, int partNumber, long partSize, InputStream input) {
         argNotNull(input == null, "inputStream is null");
         argNotNull(partNumber <= 0, "part number can not less than or equal to zero");
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("partSize", partSize);
+        resultMap.put("partNumber", partNumber);
         String tempUploadPartFolderPath = this.getTempPartFolderPathStr(tenantKey, fileId);
         // 分片临时存放文件夹是否存在，不存在则创建
         this.createDirectory(tempUploadPartFolderPath);
-        // 复制两份，一份用于计算md5,一份用于上传
-        byte[] copyByteArray = this.temporaryCopyInputStream(input);
+        // 复制一份
+        byte[] copyByteArray = StorageUtils.temporaryCopyInputStream(input);
         // 计算当前分片md5
         String currentPartMD5 = StorageUtils.calculateMD5(copyByteArray);
+        resultMap.put("Etag", currentPartMD5);
         // 查询当前分片上传事件的信息
         Map<String, Map<String, String>> uploadPartMap = getPartUploadEvent(uploadId);
         Map<String, String> uploadPartMetaMap = uploadPartMap.get(String.valueOf(partNumber));
@@ -207,19 +219,21 @@ public class LocalStorageClient implements InitializingBean {
             String partMD5 = uploadPartMetaMap.get(StorageConstant.MD5);
             if (currentPartMD5.equals(partMD5)) {
                 // 该分片已存在，不用上传
-                return;
+                return resultMap;
             }
         }
         // 上传分片
         this.uploadFile(partNumber + "", tempUploadPartFolderPath, new ByteArrayResource(copyByteArray));
         // 更新当前分片上传事件信息
         putPartUploadEvent(uploadId, partNumber + "", partSize + "", currentPartMD5);
+
+        return resultMap;
     }
 
     /**
      * 合并分片成一个文件
      */
-    public void mergePart(String tenantKey, String fileId, String uploadId) {
+    public Map<String, Object> mergePart(String tenantKey, String fileId, String uploadId) {
         String targetFolderPathStr = this.getFilePath(tenantKey, fileId);
         String tempPartFolderPathStr = getTempPartFolderPathStr(tenantKey, fileId);
 
@@ -234,12 +248,13 @@ public class LocalStorageClient implements InitializingBean {
         this.mergePartFile(tempPartFolderPathStr, targetFolderPathStr, uploadPartMap);
         // 删除分片临时文件夹
         this.deleteDirectoryAndSub(tempPartFolderPathStr);
-    }
 
-    public int ascSort(String a, String b) {
-        Integer integerA = Integer.valueOf(a);
-        Integer integerB = Integer.valueOf(b);
-        return integerA.compareTo(integerB);
+        String lastPartNumber = ascTreeMap.lastKey();
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("uploadId", uploadId);
+        resultMap.put("fileId", fileId);
+        resultMap.put("parts", lastPartNumber + 1);
+        return resultMap;
     }
 
     /**
@@ -260,26 +275,13 @@ public class LocalStorageClient implements InitializingBean {
         }
     }
 
-    private void deleteDirectoryAndSub(String pathStr) {
-        Path allPartPath = Paths.get(pathStr);
-        try (Stream<Path> walk = Files.walk(allPartPath)) {
-            if (Files.isDirectory(allPartPath)) {
-                walk.map(Path::toFile).forEach(File::delete);
-                Files.deleteIfExists(allPartPath);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("delete folder and subFile is failed", e);
-        }
-
-    }
-
     /**
      * 获取所有上传成功的分片
      */
     public Map<String, Map<String, String>> listParts(String tenantKey, String fileId, String uploadId) {
         String uploadPartFolderPathStr = this.getTempPartFolderPathStr(tenantKey, fileId);
         Map<String, Map<String, String>> uploadPartMap = this.getPartUploadEvent(uploadId);
-        uploadPartMap.entrySet()
+        uploadPartMap = uploadPartMap.entrySet()
                 .stream()
                 .filter(entry -> {
                     String partNumber = entry.getKey();
@@ -291,6 +293,13 @@ public class LocalStorageClient implements InitializingBean {
         TreeMap<String, Map<String, String>> ascTreeMap = new TreeMap<>(this::ascSort);
         ascTreeMap.putAll(uploadPartMap);
         return ascTreeMap;
+    }
+
+    /**
+     * 生成下载地址
+     */
+    public String generatePresignedUrl(String tenantKey, String fileId) {
+        return this.downloadHost + "/papi/file/remotedownload/" + fileId + "/" + tenantKey + "/true?type=stream";
     }
 
     /**
@@ -364,14 +373,6 @@ public class LocalStorageClient implements InitializingBean {
         }
     }
 
-    private Path createMultiDirectory(Path path) {
-        try {
-            return Files.createDirectories(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private void putFileToPath(Resource fileResource, String storagePath, String fileName) {
         this.uploadFile(fileName, storagePath, fileResource);
     }
@@ -382,9 +383,9 @@ public class LocalStorageClient implements InitializingBean {
     }
 
     public String putFile(Resource fileResource, String tenantKey) {
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        this.putFile(fileResource, tenantKey, uuid);
-        return uuid;
+        String localUUID = this.getLocalUUID();
+        this.putFile(fileResource, tenantKey, localUUID);
+        return localUUID;
     }
 
     /**
@@ -393,7 +394,7 @@ public class LocalStorageClient implements InitializingBean {
     private void createDirectory(String folderPath) {
         try {
             Path path = Paths.get(folderPath);
-            Files.createDirectories(path);
+            Files.createDirectory(path);
         } catch (FileAlreadyExistsException e) {
             logger.info(">>>>>>folderPath is already exist<<<<<<");
         } catch (Exception ex) {
@@ -479,10 +480,6 @@ public class LocalStorageClient implements InitializingBean {
         return this.getFilePath(tenantKey, fileId) + "-folder";
     }
 
-    private String getTempPartFilePathStr(String tenantKey, String fileId, String partNumber) {
-        return this.getTempPartFolderPathStr(tenantKey, fileId) + File.separator + partNumber;
-    }
-
     /**
      * 获取存放每次分片上传事件信息的文件夹路径
      */
@@ -494,19 +491,37 @@ public class LocalStorageClient implements InitializingBean {
         return this.rootPath + File.separator + "MULTIPART_EVENT" + File.separator + uploadId;
     }
 
-    private byte[] temporaryCopyInputStream(InputStream inputStream) {
+    private Path createMultiDirectory(Path path) {
         try {
-            return IOUtils.toByteArray(inputStream);
+            return Files.createDirectories(path);
         } catch (IOException e) {
-            throw new RuntimeException("copy inputStream to byte[] failed", e);
-        } finally {
-            if (null != inputStream) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            throw new RuntimeException(e);
         }
     }
+
+    private int ascSort(String a, String b) {
+        Integer integerA = Integer.valueOf(a);
+        Integer integerB = Integer.valueOf(b);
+        return integerA.compareTo(integerB);
+    }
+
+
+    private void deleteDirectoryAndSub(String pathStr) {
+        Path allPartPath = Paths.get(pathStr);
+        try (Stream<Path> walk = Files.walk(allPartPath)) {
+            if (Files.isDirectory(allPartPath)) {
+                walk.map(Path::toFile).forEach(File::delete);
+                Files.deleteIfExists(allPartPath);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("delete folder and subFile is failed", e);
+        }
+    }
+
+    public String getLocalUUID() {
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        return uuid + "_local";
+    }
+
+
 }

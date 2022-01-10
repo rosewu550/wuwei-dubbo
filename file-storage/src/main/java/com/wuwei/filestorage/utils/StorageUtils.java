@@ -5,7 +5,6 @@ import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,5 +50,23 @@ public class StorageUtils {
         }
     }
 
+    /**
+     * 复制inputStream
+     */
+    public static byte[] temporaryCopyInputStream(InputStream inputStream) {
+        try {
+            return IOUtils.toByteArray(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException("copy inputStream to byte[] failed", e);
+        } finally {
+            if (null != inputStream) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
 }

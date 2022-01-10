@@ -10,6 +10,7 @@
         <module>demo-up_download-provider</module>
         <module>demo-api</module>
         <module>file-storage</module>
+        <module>ffmpeg-demo</module>
     </modules>
 
     <parent>
