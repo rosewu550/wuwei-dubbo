@@ -5,7 +5,9 @@ import com.github.kokorin.jaffree.ffmpeg.*;
 import com.google.gson.Gson;
 import com.wuwei.ffmpeg.dto.MediaObjectInfo;
 import com.wuwei.ffmpeg.util.FfmpegUtils;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.io.*;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -52,8 +55,6 @@ public class FileStreamConversionImpl implements FileStreamConversion {
     private static final Integer frameRate = 15;
 
 
-
-
     @Override
     public void videoToMp4ByFfmpeg(String videoFormat, InputStream inputStream, OutputStream outputStream) {
         // 临时文件路径
@@ -77,6 +78,22 @@ public class FileStreamConversionImpl implements FileStreamConversion {
         // 开始转码
         long startTime = System.currentTimeMillis();
         this.videoTranscode(UrlInput.fromUrl(fileUrl), videoFormat, outputStream);
+        long endTime = System.currentTimeMillis();
+        logger.info(">>>>>>FINISH CONVERT VIDEO :{}ms ", endTime - startTime);
+    }
+
+    @Override
+    public void videoToMp4ByChannel(String outputFileName, String videoFormat, InputStream inputStream, OutputStream outputStream) {
+        if (StringUtils.isBlank(videoFormat) || inputStream == null || outputStream == null) {
+            return;
+        }
+        // 校验是否支持的视频格式
+//        boolean canConvert = FfmpegUtils.checkVideoMessageWithMov(videoFormat, fileUrl);
+//        Assert.state(canConvert, "不支持的视频格式");
+
+        // 开始转码
+        long startTime = System.currentTimeMillis();
+        this.videoTranscodeByChannel(outputFileName, videoFormat, inputStream, outputStream);
         long endTime = System.currentTimeMillis();
         logger.info(">>>>>>FINISH CONVERT VIDEO :{}ms ", endTime - startTime);
     }
@@ -149,6 +166,18 @@ public class FileStreamConversionImpl implements FileStreamConversion {
                 .setFormat("mp4");
     }
 
+    /**
+     * 组装输出流
+     */
+    public ChannelOutput assembleMp4ChannelOutput(String fileName, SeekableByteChannel outputChannel) {
+        return ChannelOutput.toChannel(fileName, outputChannel)
+                .addArguments("-preset", "ultrafast")
+                .addArguments("-movflags", "faststart")
+                .addArguments("-movflags", "frag_keyframe+empty_moov")
+                .setCodec(StreamType.VIDEO, "libx264")
+                .setFormat("mp4");
+    }
+
     public UrlOutput assembleMp4UrlOutput(String pathStr) {
         return UrlOutput.toUrl(pathStr)
                 .addArguments("-preset", "ultrafast")
@@ -157,8 +186,6 @@ public class FileStreamConversionImpl implements FileStreamConversion {
                 .setCodec(StreamType.VIDEO, "libx264")
                 .setFormat("mp4");
     }
-
-
 
 
     /**
@@ -216,5 +243,30 @@ public class FileStreamConversionImpl implements FileStreamConversion {
                 }
             }
         }
+    }
+
+
+    /**
+     * channel方式转码
+     */
+    public void videoTranscodeByChannel(String fileName, String videoFormat, InputStream inputStream, OutputStream outputStream) {
+        try (SeekableInMemoryByteChannel channel = new SeekableInMemoryByteChannel
+                (IOUtils.toByteArray(inputStream));
+        ) {
+            ChannelInput channelInput = ChannelInput.fromChannel(channel);
+            FFmpeg initFfmpeg = this.initVideoTranscode(channelInput);
+            SeekableInMemoryByteChannel outPutChannel = new SeekableInMemoryByteChannel();
+            ChannelOutput channelOutput = this.assembleMp4ChannelOutput(fileName, outPutChannel);
+            if ("mov".equalsIgnoreCase(videoFormat)) {
+                executeVideoTranscode(initFfmpeg, this::movToMp4, channelOutput);
+            } else {
+                executeVideoTranscode(initFfmpeg, this::commonToMp4, channelOutput);
+            }
+            byte[] array = outPutChannel.array();
+            outputStream.write(array);
+        } catch (Exception e) {
+            logger.error(">>>>>>transcode by channel failed:", e);
+        }
+
     }
 }

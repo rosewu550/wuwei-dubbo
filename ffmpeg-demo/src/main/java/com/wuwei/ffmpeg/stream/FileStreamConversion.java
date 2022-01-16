@@ -32,6 +32,11 @@ public interface FileStreamConversion {
      */
     void videoToMp4ByFfmpeg(String videoFormat, String fileUrl, OutputStream outputStream);
 
+    /**
+     * 使用channel视频转码为mp4
+     *
+     */
+    void videoToMp4ByChannel(String outputFileName, String videoFormat, InputStream inputStream, OutputStream outputStream);
 
     /**
      * 将文件流写入目标临时文件地址

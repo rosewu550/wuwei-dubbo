@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FfmpegUtils {
     private static final Logger logger = LoggerFactory.getLogger(FfmpegUtils.class);
 
-    public final static String FFMPEG_PATH = "/Users/wuwei/IdeaProjects/wuwei-dubbo/ffmpeg-demo/src/main/resources/ffmpeg/4.4_2/bin";
+    public static final String FFMPEG_PATH = "/Users/alphaxx/IdeaProjects/wuwei-dubbo/ffmpeg-demo/src/main/resources/ffmpeg/4.4_2/bin";
 
 //    public static final String FFMPEG_PATH = "/usr/local/ffmpeg";
 
