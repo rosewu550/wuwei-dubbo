@@ -87,15 +87,22 @@ public class FileStreamConversionImpl implements FileStreamConversion {
         if (StringUtils.isBlank(videoFormat) || inputStream == null || outputStream == null) {
             return;
         }
-        // 校验是否支持的视频格式
-//        boolean canConvert = FfmpegUtils.checkVideoMessageWithMov(videoFormat, fileUrl);
-//        Assert.state(canConvert, "不支持的视频格式");
 
-        // 开始转码
-        long startTime = System.currentTimeMillis();
-        this.videoTranscodeByChannel(outputFileName, videoFormat, inputStream, outputStream);
-        long endTime = System.currentTimeMillis();
-        logger.info(">>>>>>FINISH CONVERT VIDEO :{}ms ", endTime - startTime);
+        try (SeekableInMemoryByteChannel inputChannel
+                     = new SeekableInMemoryByteChannel(org.apache.commons.compress.utils.IOUtils.toByteArray(inputStream))) {
+            // 校验是否支持的视频格式
+            boolean canConvert = FfmpegUtils.checkVideoMessageWithMov(videoFormat, inputChannel);
+            Assert.state(canConvert, "不支持的视频格式");
+
+            // 开始转码
+            long startTime = System.currentTimeMillis();
+            this.videoTranscodeByChannel(outputFileName, videoFormat, inputChannel, outputStream);
+            long endTime = System.currentTimeMillis();
+            logger.info(">>>>>>FINISH CONVERT VIDEO :{}ms ", endTime - startTime);
+
+        } catch (Exception e) {
+            logger.error("video transcode failed:", e);
+        }
     }
 
 
@@ -151,7 +158,8 @@ public class FileStreamConversionImpl implements FileStreamConversion {
      * 一般视频转mp4
      */
     private FFmpeg commonToMp4(FFmpeg fFmpeg) {
-        return fFmpeg.addArguments("-c:a", "copy");
+        return fFmpeg.addArguments("-c:a", "copy")
+                .addArguments("-c:v", "libx264");
     }
 
     /**
@@ -162,7 +170,6 @@ public class FileStreamConversionImpl implements FileStreamConversion {
                 .addArguments("-preset", "ultrafast")
                 .addArguments("-movflags", "faststart")
                 .addArguments("-movflags", "frag_keyframe+empty_moov")
-                .setCodec(StreamType.VIDEO, "libx264")
                 .setFormat("mp4");
     }
 
@@ -174,7 +181,7 @@ public class FileStreamConversionImpl implements FileStreamConversion {
                 .addArguments("-preset", "ultrafast")
                 .addArguments("-movflags", "faststart")
                 .addArguments("-movflags", "frag_keyframe+empty_moov")
-                .setCodec(StreamType.VIDEO, "libx264")
+                .addArguments("-loglevel", "error")
                 .setFormat("mp4");
     }
 
@@ -253,15 +260,31 @@ public class FileStreamConversionImpl implements FileStreamConversion {
         try (SeekableInMemoryByteChannel channel = new SeekableInMemoryByteChannel
                 (IOUtils.toByteArray(inputStream));
         ) {
-            ChannelInput channelInput = ChannelInput.fromChannel(channel);
+            this.videoTranscodeByChannel(fileName, videoFormat, channel, outputStream);
+        } catch (Exception e) {
+            logger.error(">>>>>>transcode by channel failed:", e);
+        }
+
+    }
+
+    /**
+     * channel方式转码
+     */
+    public void videoTranscodeByChannel(String fileName, String videoFormat, SeekableByteChannel inputChannel, OutputStream outputStream) {
+        try {
+            ChannelInput channelInput = ChannelInput.fromChannel(inputChannel);
             FFmpeg initFfmpeg = this.initVideoTranscode(channelInput);
             SeekableInMemoryByteChannel outPutChannel = new SeekableInMemoryByteChannel();
             ChannelOutput channelOutput = this.assembleMp4ChannelOutput(fileName, outPutChannel);
+            long startTime = System.currentTimeMillis();
             if ("mov".equalsIgnoreCase(videoFormat)) {
                 executeVideoTranscode(initFfmpeg, this::movToMp4, channelOutput);
             } else {
                 executeVideoTranscode(initFfmpeg, this::commonToMp4, channelOutput);
             }
+            long endTime = System.currentTimeMillis();
+            logger.info(">>>>>>transcode use time : {}ms", endTime - startTime);
+
             byte[] array = outPutChannel.array();
             outputStream.write(array);
         } catch (Exception e) {
