@@ -29,7 +29,7 @@ public class FfmpegUploadController {
     public void downloadVideoFile(HttpServletResponse response) {
 
         try {
-            String fileUrl = "/Volumes/storage/wuwei/video/transcode/video1.mov";
+            String fileUrl = "/Volumes/storage/wuwei/video/transcode/AGPMInjector.mp4";
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             response.setHeader("Content-Disposition", "attachment;filename=\"" + "convert.mp4" + "\"");
 
@@ -43,7 +43,10 @@ public class FfmpegUploadController {
     public void downloadVideoFileByChannel(HttpServletResponse response) {
 
         try {
+//            String fileUrl = "/Volumes/other/下载/video/new/video1.flv";
+//            String fileUrl = "/Users/wuwei/Downloads/屏幕录制2022-01-12 下午3.38.51(2).mp4";
             String fileUrl = "/Volumes/storage/wuwei/video/transcode/video1.mov";
+//            String fileUrl = "/Volumes/other/下载/88bf6ddaad68ed274cb6047d9abb82e3.avi";
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             response.setHeader("Content-Disposition", "attachment;filename=\"" + "convert.mp4" + "\"");
 

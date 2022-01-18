@@ -5,10 +5,15 @@ import com.github.kokorin.jaffree.ffmpeg.*;
 import com.github.kokorin.jaffree.ffprobe.FFprobe;
 import com.github.kokorin.jaffree.ffprobe.FFprobeResult;
 import com.google.gson.Gson;
+import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.io.InputStream;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FfmpegUtils {
     private static final Logger logger = LoggerFactory.getLogger(FfmpegUtils.class);
 
-    public static final String FFMPEG_PATH = "/Users/alphaxx/IdeaProjects/wuwei-dubbo/ffmpeg-demo/src/main/resources/ffmpeg/4.4_2/bin";
+    public final static String FFMPEG_PATH = "/Users/wuwei/IdeaProjects/wuwei-dubbo/ffmpeg-demo/src/main/resources/ffmpeg/4.4_2/bin";
 
 //    public static final String FFMPEG_PATH = "/usr/local/ffmpeg";
 
@@ -30,6 +35,11 @@ public class FfmpegUtils {
 
 
     private FfmpegUtils() {
+    }
+
+    public static boolean checkVideoMessageWithMov(String videoFormat, SeekableByteChannel seekableByteChannel) {
+        com.github.kokorin.jaffree.ffprobe.ChannelInput channelInput = com.github.kokorin.jaffree.ffprobe.ChannelInput.fromChannel(seekableByteChannel);
+        return "mov".equalsIgnoreCase(videoFormat) || checkVideoMessage(channelInput);
     }
 
     public static boolean checkVideoMessageWithMov(String videoFormat, String fileUrl) {
@@ -51,7 +61,7 @@ public class FfmpegUtils {
         boolean isVideo = false;
         boolean isSupportVideoCodec = false;
         for (com.github.kokorin.jaffree.ffprobe.Stream stream : videoMessageResult.getStreams()) {
-            logger.info(">>>>>>video stream : {}", new Gson().toJson(stream));
+            logger.info(">>>>>>{} stream : {}", stream.getCodecType(), new Gson().toJson(stream));
             StreamType codecType = stream.getCodecType();
             if (codecType.equals(StreamType.VIDEO)) {
                 isVideo = true;
@@ -63,6 +73,7 @@ public class FfmpegUtils {
                             || codecLongName.contains("H.263")
                             || codecLongName.contains("MPEG-4 part 2")
                             || codecLongName.contains("VP6")
+                            || codecLongName.contains("FLV")
             )
             ) {
                 isSupportVideoCodec = true;
