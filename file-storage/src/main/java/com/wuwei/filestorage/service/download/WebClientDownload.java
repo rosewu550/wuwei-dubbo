@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import reactor.core.publisher.Mono;
@@ -92,12 +94,20 @@ public class WebClientDownload {
         logger.info(">>>>>>webClientDownload current eteamsId:{}", this.eteamsId);
         logger.info(">>>>>>webClientDownload current url:{}", FileUtils.getDownloadUrl(this.fileId));
 
+
+        MultiValueMap<String, String> queryParamMap = new LinkedMultiValueMap<>();
         return WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect(true)))
                 .baseUrl(FileUtils.getDownloadUrl(this.fileId))
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect(true)))
                 .defaultCookie("ETEAMSID", this.eteamsId)
                 .build()
                 .get()
+                .uri(uriBuilder ->
+                        uriBuilder.path("{fileId}/auth/true")
+                                .queryParams(queryParamMap)
+                                .build(this.fileId)
+                )
+                .header("module", this.module)
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .retrieve()
                 .bodyToMono(InputStreamResource.class)

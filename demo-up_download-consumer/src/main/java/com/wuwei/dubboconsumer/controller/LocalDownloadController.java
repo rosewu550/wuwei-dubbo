@@ -42,7 +42,15 @@ public class LocalDownloadController {
                              HttpServletResponse response) {
         InputStream inputStream = null;
         try (ServletOutputStream servletOutputStream = response.getOutputStream()) {
+            // 得到JVM中的空闲内存量（单位是m）
+            System.out.println("空闲内存："+Runtime.getRuntime().freeMemory()/1024/1024);
+            // 的JVM内存总量（单位是m）
+            System.out.println("jvm内存总量："+Runtime.getRuntime().totalMemory()/1024/1024);
             inputStream = storageStrategy.getFile(fileId, tenantKey);
+            // 得到JVM中的空闲内存量（单位是m）
+            System.out.println("空闲内存："+Runtime.getRuntime().freeMemory()/1024/1024);
+            // 的JVM内存总量（单位是m）
+            System.out.println("jvm内存总量："+Runtime.getRuntime().totalMemory()/1024/1024);
             byte[] bytes = new byte[4096];
             int length;
             while ((length = inputStream.read(bytes)) > 0) {

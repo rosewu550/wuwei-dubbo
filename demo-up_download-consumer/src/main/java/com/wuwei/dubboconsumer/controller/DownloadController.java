@@ -86,6 +86,14 @@ public class DownloadController {
         }
     }
 
+    @GetMapping("/weblClient/download")
+    public void webClientDownload(){
+        WebClientDownload webClientDownload = new WebClientDownload(7834310948597176316L);
+        webClientDownload.init("ae8122ace787a4d8b8b82b1fa578be67","document");
+        InputStream inputStream = webClientDownload.blockDownload();
+        System.out.println(inputStream);
+    }
+
 //    @GetMapping("/http/downloadInputStream")
 //    public void testHttpDownload(@RequestParam("fileId") Long fileId, @RequestParam("eteamsId") String eteamsId, @RequestParam("module") String module) {
 //        WebClientDownload webClientDownload = new WebClientDownload(fileId);

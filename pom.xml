@@ -12,6 +12,7 @@
         <module>file-storage</module>
         <module>ffmpeg-demo</module>
         <module>demo-util</module>
+        <module>waterMaker</module>
     </modules>
 
     <parent>

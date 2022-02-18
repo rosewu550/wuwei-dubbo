@@ -4,6 +4,7 @@ package com.wuwei.filestorage.local;
 import com.wuwei.filestorage.constant.StorageConstant;
 import com.wuwei.filestorage.utils.StorageUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -135,10 +136,10 @@ public class LocalStorageClient implements InitializingBean {
     public InputStream downloadFile(String tenantKey, String fileId) {
         String filePathStr = this.getFilePath(tenantKey, fileId);
         Path filePath = Paths.get(filePathStr);
-        try {
-            byte[] fileByteArray = Files.readAllBytes(filePath);
-            return new ByteArrayInputStream(fileByteArray);
-        } catch (IOException e) {
+        try (InputStream inputStream = Files.newInputStream(filePath)) {
+            byte[] byteArray = IOUtils.toByteArray(inputStream);
+            return new ByteArrayInputStream(byteArray);
+        } catch (Exception e) {
             throw new RuntimeException("download file failed");
         }
     }

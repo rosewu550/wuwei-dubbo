@@ -45,7 +45,7 @@ public class FileUtils {
      */
     public static String getDownloadUrl(Long fileId) {
         Long tempFileId = Optional.ofNullable(fileId).orElse(0L);
-        return FileConstant.DOWNLOAD_ENDPOINT + tempFileId + "/auth/true";
+        return "http://localhost:8281"+FileConstant.DOWNLOAD_ENDPOINT;
     }
 
 }
