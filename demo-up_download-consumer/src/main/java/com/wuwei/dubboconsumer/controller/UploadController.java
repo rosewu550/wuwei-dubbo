@@ -192,7 +192,7 @@ public class UploadController {
         long startTime = System.currentTimeMillis();
         ResultDto resultDto = null;
         WebClientUpload webClientUpload = new WebClientUpload(file);
-        resultDto = webClientUpload.init("8c7f716f4dbf8cb0fded9d560669b11b",
+        resultDto = webClientUpload.init("dcb4415c9dd7d553f74a3c4426508309",
                         file.getOriginalFilename(), "document", file.getSize(), new Date().getTime() + "", "")
                 .blockUpload();
         long endTime = System.currentTimeMillis();

@@ -2,7 +2,7 @@ server:
   port: 5052
   tomcat:
     basedir: F:\tomcat_project\temp
-  connection-timeout:  20000
+  connection-timeout:  100000
 
 
 spring:

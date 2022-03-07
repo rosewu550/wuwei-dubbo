@@ -228,22 +228,22 @@ public class WebClientUpload {
 
     private <T> Mono<ResultDto<T>> upload(ParameterizedTypeReference<ResultDto<T>> typeReference) {
         BeanMap beanMap = new BeanMap(this.assembleEntity());
-        Set<Map.Entry<String, Object>> beanSet = beanMap.entrySet();
+        Set<Map.Entry<Object, Object>> beanSet = beanMap.entrySet();
         beanSet.stream()
                 .filter(this::filterUploadBeanMap)
-                .forEach(entry -> this.uploadBodyBuilder.part(entry.getKey(), entry.getValue()));
+                .forEach(entry -> this.uploadBodyBuilder.part((String) entry.getKey(), entry.getValue()));
 
         logger.info(">>>>>>webClientUpload start upload<<<<<<");
         logger.info(">>>>>>webClientUpload current eteamsId:{}", this.eteamsId);
-        logger.info(">>>>>>webClientUpload current url:{}", FileUtils.getHost()+FileUtils.getUploadUrl());
+        logger.info(">>>>>>webClientUpload current url:{}", FileUtils.getHost() + FileUtils.getUploadUrl());
 
         return FileWebClient.upload(eteamsId, uploadBodyBuilder, typeReference);
     }
 
 
-    private boolean filterUploadBeanMap(Map.Entry<String, Object> entry) {
+    private boolean filterUploadBeanMap(Map.Entry<Object, Object> entry) {
         boolean isSaveParam;
-        String key = entry.getKey();
+        Object key = entry.getKey();
         if ("chunk".equals(key)) {
             return true;
         }
