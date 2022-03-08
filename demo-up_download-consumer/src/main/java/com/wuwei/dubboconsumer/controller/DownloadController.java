@@ -109,7 +109,7 @@ public class DownloadController {
         Path path = Paths.get("/Volumes/other/下载/picture/d7ae9905003e5b33c8d4bbd382f677dd.jpeg");
         try (InputStream inputStream = Files.newInputStream(path);
              ServletOutputStream servletOutputStream = response.getOutputStream()) {
-            WatermarkStream textStream = watermarkStreamManager.getWatermark("text");
+            WatermarkStream textStream = watermarkStreamManager.getWatermark(watermarkContentParam.getType());
             InputStream watermarkInputStream = textStream.watermarkImage(inputStream, watermarkContentParam);
             byte[] bytes = new byte[4096];
             int length;

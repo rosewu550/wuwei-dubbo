@@ -1,9 +1,9 @@
 package com.wuwei.watermark.watermarkstream;
 
 
-import com.aspose.diagram.Char;
 import com.wuwei.watermark.constant.AlignEnum;
 import com.wuwei.watermark.entity.WatermarkContentParam;
+import com.wuwei.watermark.utils.WatermarkUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Service("fileComponent_textWatermarkStream")
 public class TextWatermarkStream implements WatermarkStream {
@@ -36,7 +34,7 @@ public class TextWatermarkStream implements WatermarkStream {
         String textContent = Optional.ofNullable(watermarkContentParam.getTextContent()).orElse("");
 
         // 字体处理
-        Font font = new Font(fontStr, Font.BOLD, size);
+        Font font = new Font(fontStr, Font.PLAIN, size);
         // 颜色处理,不透明度处理
         if (StringUtils.isBlank(colorStr) || !colorStr.startsWith("#") || colorStr.length() != 7) {
             colorStr = "#000000";
@@ -48,20 +46,20 @@ public class TextWatermarkStream implements WatermarkStream {
                 colorStr = "#000000";
             }
         }
-        opacity = opacity > 100 ? 100 : opacity;
-        int alpha = (int) ((opacity / 100.0) * 255 + 0.5);
         Color color = new Color(
                 Integer.valueOf(colorStr.substring(1, 3), 16),
                 Integer.valueOf(colorStr.substring(3, 5), 16),
-                Integer.valueOf(colorStr.substring(5, 7), 16),
-                alpha
+                Integer.valueOf(colorStr.substring(5, 7), 16)
         );
         // 旋转角度处理
         double theta = -(rotation / 180.0) * Math.PI;
+        // 不透明度
+        opacity = opacity > 100 ? 100 : opacity;
+        float alpha = opacity / 100.0f;
         // 读取待加水印的图片
         BufferedImage sourceImage = ImageIO.read(imageInputStream);
         Graphics2D g2d = (Graphics2D) sourceImage.getGraphics();
-        AlphaComposite alphaChannel = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f);
+        AlphaComposite alphaChannel = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
         g2d.setComposite(alphaChannel);
         g2d.setFont(font);
         g2d.setColor(color);
