@@ -10,6 +10,7 @@ import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.InputStream;
@@ -27,7 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FfmpegUtils {
     private static final Logger logger = LoggerFactory.getLogger(FfmpegUtils.class);
 
-    public final static String FFMPEG_PATH = "/Users/wuwei/IdeaProjects/wuwei-dubbo/ffmpeg-demo/src/main/resources/ffmpeg/4.4_2/bin";
+//    public final static String FFMPEG_PATH = "/Users/wuwei/IdeaProjects/wuwei-dubbo/ffmpeg-demo/src/main/resources/ffmpeg/4.4_2/bin";
+    public final static String FFMPEG_PATH = "/Volumes/storage/wuwei/neat_donwload/Compressed";
 
 //    public static final String FFMPEG_PATH = "/usr/local/ffmpeg";
 
@@ -35,6 +37,18 @@ public class FfmpegUtils {
 
 
     private FfmpegUtils() {
+    }
+
+    public static void getVideoMessage(InputStream inputStream) {
+        try (SeekableInMemoryByteChannel inputChannel
+                     = new SeekableInMemoryByteChannel(org.apache.commons.compress.utils.IOUtils.toByteArray(inputStream))) {
+            com.github.kokorin.jaffree.ffprobe.ChannelInput channelInput = com.github.kokorin.jaffree.ffprobe.ChannelInput.fromChannel(inputChannel);
+            // 校验是否支持的视频格式
+            boolean canConvert = checkVideoMessage(channelInput);
+            Assert.state(canConvert, "不支持的视频格式");
+        } catch (Exception e) {
+            logger.error("video transcode failed:", e);
+        }
     }
 
     public static boolean checkVideoMessageWithMov(String videoFormat, SeekableByteChannel seekableByteChannel) {
@@ -74,6 +88,7 @@ public class FfmpegUtils {
                             || codecLongName.contains("MPEG-4 part 2")
                             || codecLongName.contains("VP6")
                             || codecLongName.contains("FLV")
+                            || codecLongName.contains("H.265 / HEVC")
             )
             ) {
                 isSupportVideoCodec = true;

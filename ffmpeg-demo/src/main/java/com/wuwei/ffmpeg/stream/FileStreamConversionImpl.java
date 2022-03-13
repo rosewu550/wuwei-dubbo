@@ -159,7 +159,7 @@ public class FileStreamConversionImpl implements FileStreamConversion {
      */
     private FFmpeg commonToMp4(FFmpeg fFmpeg) {
         return fFmpeg.addArguments("-c:a", "copy")
-                .addArguments("-c:v", "libx264");
+                .addArguments("-c:v", "h264");
     }
 
     /**

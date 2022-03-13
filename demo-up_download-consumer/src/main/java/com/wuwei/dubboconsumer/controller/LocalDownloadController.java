@@ -1,16 +1,12 @@
 package com.wuwei.dubboconsumer.controller;
 
 
-import com.wuwei.ffmpeg.constant.FfmpegConstant;
-import com.wuwei.ffmpeg.stream.FileStreamConversion;
-import com.wuwei.ffmpeg.util.FfmpegUtil;
 import com.wuwei.filestorage.common.ResponseHeaderSettings;
 import com.wuwei.filestorage.strategy.StorageStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,12 +17,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 public class LocalDownloadController {

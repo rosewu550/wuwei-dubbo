@@ -13,7 +13,6 @@
         <module>ffmpeg-demo</module>
         <module>demo-util</module>
         <module>watermark</module>
-        <module>file-watermark</module>
     </modules>
 
     <parent>
