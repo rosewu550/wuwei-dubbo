@@ -60,8 +60,8 @@ public class LocalStorageUploadController {
             }
             String s = storageStrategy.listParts(tenantKey, currentFileId, uploadId);
             Map<String, String> stringStringMap = storageStrategy.completeMultipartUpload(tenantKey, currentFileId, uploadId);
-            String copyFileId = storageStrategy.copyFile(currentFileId, tenantKey, tenantKey);
-            int i = storageStrategy.deleteFile(copyFileId, tenantKey);
+//            String copyFileId = storageStrategy.copyFile(currentFileId, tenantKey, tenantKey);
+//            int i = storageStrategy.deleteFile(copyFileId, tenantKey);
             System.out.println(stringStringMap);
             msg = "上传成功！";
         } catch (Exception e) {
@@ -82,14 +82,13 @@ public class LocalStorageUploadController {
         List<byte[]> chunkList = new ArrayList<>();
         try {
             int len;
-            byte[] chunkByteArray = new byte[1024 * 1024];
+            byte[] chunkByteArray = new byte[4 * 1024 * 1024];
             while ((len = inputStream.read(chunkByteArray)) != -1) {
                 byte[] newByteArray = new byte[len];
                 System.arraycopy(chunkByteArray, 0, newByteArray, 0, len);
                 chunkList.add(newByteArray);
-                chunkByteArray = new byte[1024 * 1024];
+                chunkByteArray = new byte[4 * 1024 * 1024];
             }
-            System.out.println(chunkList);
         } catch (IOException e) {
             e.printStackTrace();
         }

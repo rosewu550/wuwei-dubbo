@@ -12,14 +12,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.AsynchronousChannel;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
@@ -42,6 +50,8 @@ public class LocalStorageClient implements InitializingBean {
 
     private static final LinkedBlockingQueue<Map<Path, String>> uploadPartMetaStrQueue = new LinkedBlockingQueue<>();
 
+    protected static ExecutorService mergeFilePartExecutor = Executors.newFixedThreadPool(10);
+
     public String getAppKey() {
         return appKey;
     }
@@ -61,8 +71,9 @@ public class LocalStorageClient implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         try {
+            String uploadPartEventPathStr = this.getUploadPartEventPathStr();
             // 在根目录下生成一个文件夹用于存放分片上传事件
-            Path multipartEventPath = Paths.get(this.getUploadPartEventPathStr());
+            Path multipartEventPath = Paths.get(uploadPartEventPathStr);
             Files.createDirectories(multipartEventPath);
         } catch (FileAlreadyExistsException e) {
             logger.info(">>>>>>MULTIPART_EVENT folder is already exist<<<<<<");
@@ -247,14 +258,13 @@ public class LocalStorageClient implements InitializingBean {
         validatePartNum(partNumberAscList);
         // 开始合并
         this.mergePartFile(tempPartFolderPathStr, targetFolderPathStr, uploadPartMap);
-        // 删除分片临时文件夹
-        this.deleteDirectoryAndSub(tempPartFolderPathStr);
 
-        String lastPartNumber = ascTreeMap.lastKey();
+        String lastPartNumberStr = ascTreeMap.lastKey();
+        Long lastPartNumber = Optional.ofNullable(lastPartNumberStr).map(Long::valueOf).orElse(0L);
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("uploadId", uploadId);
         resultMap.put("fileId", fileId);
-        resultMap.put("parts", lastPartNumber + 1);
+        resultMap.put("parts", lastPartNumber);
         return resultMap;
     }
 
@@ -355,22 +365,98 @@ public class LocalStorageClient implements InitializingBean {
             String partFilePathStr = tempPartFolderPathStr + File.separator + partNumber;
             validatePart(partFilePathStr, partMD5);
         });
-
-        int position = 0;
-        try (FileChannel targetFileOpenChannel
-                     = FileChannel.open(Files.createFile(targetFolderPath), StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-            targetFileOpenChannel.lock();
+        // nio多线程合并分片
+        long partPosition = 0;
+        List<CompletableFuture<Void>> completableFutureList = new ArrayList<>();
+        try {
+            RandomAccessFile targetFileRa = new RandomAccessFile(Files.createFile(targetFolderPath).toFile(), "rw");
+            FileChannel targetFileRaChannel = targetFileRa.getChannel();
             for (String uploadPartName : ascUploadPartNameList) {
                 Path currentUploadPartPath = tempPartFolderPath.resolve(uploadPartName);
-                byte[] uploadPartByteArray = Files.readAllBytes(currentUploadPartPath);
-                int len = uploadPartByteArray.length;
-                targetFileOpenChannel
-                        .position(position)
-                        .write(ByteBuffer.wrap(uploadPartByteArray));
-                position += len;
+                RandomAccessFile currentPartFileRa = new RandomAccessFile(currentUploadPartPath.toFile(), "r");
+                long finalPartPosition = partPosition;
+                FileChannel partFileRaChannel = currentPartFileRa.getChannel();
+                long currentPartLength = partFileRaChannel.size();
+                // 开启多线程执行合并分片
+                CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(
+                        () -> asyncMergeFilePart(targetFileRaChannel, partFileRaChannel, finalPartPosition)
+                        , mergeFilePartExecutor);
+                completableFutureList.add(voidCompletableFuture);
+                partPosition += currentPartLength;
             }
+
+            CompletableFuture[] completableFutureArr = completableFutureList.toArray(new CompletableFuture[0]);
+            // 分片合并完毕后，删除临时分片文件
+            CompletableFuture.allOf(completableFutureArr)
+                    .thenRunAsync(() -> deleteDirectoryAndSub(tempPartFolderPathStr));
         } catch (Exception e) {
-            throw new RuntimeException("merge part failed", e);
+            logger.error("\n>>>>>>>>>>>> merge file part failed : ", e);
+            throw new RuntimeException("merge file part failed");
+        }
+
+
+//        Instant start = Instant.now();
+//        long position = 0;
+//        List<CompletableFuture<Void>> completableFutureList = new ArrayList<>();
+//        try (AsynchronousFileChannel asyncFileChannel
+//                     = AsynchronousFileChannel.open(Files.createFile(targetFolderPath), StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+//            for (String uploadPartName : ascUploadPartNameList) {
+//                ByteBuffer buffer = ByteBuffer.allocate(4 * 1024 * 1024);
+//                Path currentUploadPartPath = tempPartFolderPath.resolve(uploadPartName);
+//                byte[] uploadPartByteArray = Files.readAllBytes(currentUploadPartPath);
+//                long len = uploadPartByteArray.length;
+//                buffer.put(uploadPartByteArray);
+//                buffer.flip();
+//                CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> {
+//                });
+//                asyncFileChannel.write(buffer, position, voidCompletableFuture,
+//                        new CompletionHandler<Integer, CompletableFuture<Void>>() {
+//                            @Override
+//                            public void completed(Integer result, CompletableFuture<Void> attachment) {
+//                            }
+//
+//                            @Override
+//                            public void failed(Throwable exc, CompletableFuture<Void> attachment) {
+//                            }
+//                        });
+//                completableFutureList.add(voidCompletableFuture);
+//                buffer.clear();
+//                position += len;
+//            }
+//            // 所有分片成功合并结束后，再删除临时文件
+//            CompletableFuture[] completableFutureArr = completableFutureList.toArray(new CompletableFuture[0]);
+//            CompletableFuture.allOf(completableFutureArr)
+//                    .thenRunAsync(() -> deleteDirectoryAndSub(tempPartFolderPathStr));
+//            Instant end = Instant.now();
+//            long time = Duration.between(start, end).toMillis();
+//            logger.info(">>>>合并分片总耗时：{}ms", time);
+//        } catch (Exception e) {
+//            logger.error(">>>>>>>>>>>>>>>>>>> merge file part failed : ", e);
+//            throw new RuntimeException("merge file part failed");
+//        }
+    }
+
+    private void asyncMergeFilePart(FileChannel targetFileRaChannel, FileChannel partFileRaChannel, long partPosition) {
+        try {
+            long currentPartLength = partFileRaChannel.size();
+            MappedByteBuffer partFileRaMapped = partFileRaChannel.map(FileChannel.MapMode.READ_ONLY, 0, partFileRaChannel.size());
+            MappedByteBuffer targetFileRaMapped = targetFileRaChannel.map(FileChannel.MapMode.READ_WRITE, partPosition, currentPartLength);
+
+            byte[] partFileArr = new byte[(int) currentPartLength];
+            partFileRaMapped.get(partFileArr);
+            targetFileRaMapped.put(partFileArr);
+            Cleaner inMLocalCleaner = ((DirectBuffer) partFileRaMapped).cleaner();
+            if (inMLocalCleaner != null) {
+                inMLocalCleaner.clean();
+            }
+            Cleaner outMLocalCleaner = ((DirectBuffer) targetFileRaMapped).cleaner();
+            if (outMLocalCleaner != null) {
+                outMLocalCleaner.clean();
+            }
+
+        } catch (Exception e) {
+            logger.error("\n>>>>>>>>>>>> part upload failed : ", e);
+            throw new RuntimeException("merge file part failed");
         }
     }
 
@@ -397,7 +483,7 @@ public class LocalStorageClient implements InitializingBean {
             Path path = Paths.get(folderPath);
             Files.createDirectory(path);
         } catch (FileAlreadyExistsException e) {
-            logger.info(">>>>>>folderPath is already exist<<<<<<");
+//            logger.info("\n>>>>>>folderPath is already exist : {}",folderPath);
         } catch (Exception ex) {
             throw new RuntimeException(folderPath + " create or check is failed<<<<<<", ex);
         }
@@ -508,6 +594,7 @@ public class LocalStorageClient implements InitializingBean {
 
 
     private void deleteDirectoryAndSub(String pathStr) {
+        logger.info("\n>>>>>>>>>>>>>>>>>> start delete file part folder <<<<<<<<<<<<<<<<<");
         Path allPartPath = Paths.get(pathStr);
         try (Stream<Path> walk = Files.walk(allPartPath)) {
             if (Files.isDirectory(allPartPath)) {
