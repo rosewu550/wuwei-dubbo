@@ -3,7 +3,7 @@ package com.wuwei.dubboconsumer.controller;
 
 import com.wuwei.filestorage.common.ResponseHeaderSettings;
 import com.wuwei.filestorage.strategy.StorageStrategy;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

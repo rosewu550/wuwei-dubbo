@@ -2,6 +2,7 @@ package com.wuwei.dubboconsumer.controller;
 
 
 import com.wuwei.dubboApi.service.DownloadDemoService;
+import com.wuwei.dubboconsumer.utils.WebClientUtils;
 import com.wuwei.filestorage.service.download.WebClientDownload;
 import com.wuwei.watermark.entity.WatermarkContentParam;
 import com.wuwei.watermark.watermarkstream.WatermarkStream;
@@ -10,21 +11,28 @@ import org.apache.dubbo.config.annotation.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
 public class DownloadController {
-    private final Logger logger = LoggerFactory.getLogger(DownloadController.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownloadController.class);
 
     @Reference(group = "hessian", timeout = 300000)
     private DownloadDemoService downloadDemoService;
@@ -34,6 +42,10 @@ public class DownloadController {
 
     @Autowired
     private WatermarkStreamManager watermarkStreamManager;
+
+    private static final ParameterizedTypeReference<InputStreamResource> typeReference =
+            new ParameterizedTypeReference<InputStreamResource>() {
+            };
 
     @GetMapping("/downloadInputStream")
     public void downloadFile(@RequestParam("path") String path, HttpServletResponse response) {
@@ -94,6 +106,37 @@ public class DownloadController {
             e.printStackTrace();
             logger.error("失败，信息：{}", e.getMessage());
         }
+    }
+
+
+    @GetMapping("/webclient/test")
+    public void webClientDownloadTest() {
+        String url = "https://release-1301503941.cos.ap-shanghai.myqcloud.com/tam3vutq78/39b1a23f-af00-4d74-b1fa-750c03507a42?sign=q-sign-algorithm%3Dsha1%26q-ak%3DAKIDqcLvPmX4XO8iMjIHoSG3CDXiiXkn8EJD%26q-sign-time%3D1647448689%3B1647452289%26q-key-time%3D1647448689%3B1647452289%26q-header-list%3Dhost%26q-url-param-list%3Dresponse-content-disposition%26q-signature%3Dd11d56593320b822b26c4150a4c2cc1c328b58a5&response-content-disposition=attachment%3Bfilename%3D%220409c9202de36d64a9c8e6a549b3f45e.jpeg%22";
+        try {
+            download(url);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void download(String downloadUrl) throws UnsupportedEncodingException {
+        WebClientUtils.getWebClient("https://release-1301503941.cos.ap-shanghai.myqcloud.com/tam3vutq78/39b1a23f-af00-4d74-b1fa-750c03507a42", "sign=q-sign-algorithm%3Dsha1%26q-ak%3DAKIDqcLvPmX4XO8iMjIHoSG3CDXiiXkn8EJD%26q-sign-time%3D1647448689%3B1647452289%26q-key-time%3D1647448689%3B1647452289%26q-header-list%3Dhost%26q-url-param-list%3Dresponse-content-disposition%26q-signature%3Dd11d56593320b822b26c4150a4c2cc1c328b58a5&response-content-disposition=attachment%3Bfilename%3D%220409c9202de36d64a9c8e6a549b3f45e.jpeg%22")
+                .get()
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .doOnError(error -> {
+                    if (error instanceof WebClientResponseException.InternalServerError) {
+                        String responseBodyAsString = ((WebClientResponseException.InternalServerError) error).getResponseBodyAsString();
+                        logger.error(">>>>>>download failed ->{}", responseBodyAsString);
+                    } else {
+                        logger.error(">>>>>>download failed ->", error);
+                    }
+                })
+                .doFinally(signalType -> {
+                    String name = signalType.name();
+                })
+                .checkpoint()
+                .block();
     }
 
     @GetMapping("/webClient/download")
