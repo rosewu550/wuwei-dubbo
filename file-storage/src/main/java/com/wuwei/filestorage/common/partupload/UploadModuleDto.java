@@ -16,6 +16,9 @@ public class UploadModuleDto implements Serializable {
 
 
     private static final long serialVersionUID = -1216764134044983664L;
+
+    private String loadUrl;
+
     /**
      * 文件id
      */
@@ -172,6 +175,13 @@ public class UploadModuleDto implements Serializable {
     public UploadModuleDto() {
     }
 
+    public String getLoadUrl() {
+        return loadUrl;
+    }
+
+    public void setLoadUrl(String loadUrl) {
+        this.loadUrl = loadUrl;
+    }
 
     public Long getFolderId() {
         return folderId;

@@ -127,7 +127,7 @@ public class WebClientUpload extends Upload {
         upload4ModuleParam.setPosition(this.position);
         upload4ModuleParam.setFolderId(this.folderId);
         upload4ModuleParam.setCreateDoc(this.createDoc);
-        upload4ModuleParam.setTenantKey(this.tenantKey);
+//        upload4ModuleParam.setTenantKey(this.tenantKey);
         upload4ModuleParam.setFolderType(this.folderType);
         upload4ModuleParam.setLastModified(this.lastModified);
         upload4ModuleParam.setLastModifiedDate(this.lastModifiedDate);

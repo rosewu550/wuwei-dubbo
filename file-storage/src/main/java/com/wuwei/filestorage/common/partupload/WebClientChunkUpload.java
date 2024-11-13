@@ -129,7 +129,6 @@ public class WebClientChunkUpload extends Upload {
             throw new RuntimeException(message);
         } else {
             String check = chunkUpCheckData.getCheck();
-            String success = chunkUpCheckData.getSuccess();
             if (!"true".equalsIgnoreCase(check)) {
                 throw new RuntimeException(">>>>>>chunkUpCheck检测不通过,返回值：ChunkUpCheckDto = " + chunkUpCheckData.toString());
             }
