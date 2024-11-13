@@ -1,4 +1,4 @@
-package com.wuwei.filestorage.local;
+package com.wuwei.filestorage.storagetype.local;
 
 
 import com.wuwei.filestorage.constant.StorageConstant;

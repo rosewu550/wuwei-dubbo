@@ -1,7 +1,7 @@
 package com.wuwei.filestorage.strategy;
 
 import com.alibaba.fastjson.JSON;
-import com.wuwei.filestorage.local.LocalStorageClient;
+import com.wuwei.filestorage.storagetype.local.LocalStorageClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
