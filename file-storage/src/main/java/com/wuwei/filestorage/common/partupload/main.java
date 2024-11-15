@@ -12,7 +12,7 @@ import java.util.Date;
 public class main {
 
     public static void main(String[] args) throws Exception {
-        File file = new File("/Users/alphaxx/Downloads/dev-sys.log");
+        File file = new File("/Users/alphaxx/Downloads/60帧.4K.H265.AAC.mp4");
         String filename = file.getName();
 
         // 根据不同环境修改com.wuwei.filestorage.common.partupload.FileWebClient.FILE_HOST的值

@@ -73,7 +73,7 @@ public class WebClientChunkUpload extends Upload {
         // 计算md5值
         this.md5 = DigestUtils.md5DigestAsHex(new FileInputStream(file));
         // 计算分片总数
-        int chunks = (int) filesize % chunkSize > 0 ? ((int) filesize / chunkSize) + 1 : (int) filesize / chunkSize;
+        int chunks = (int) (filesize % chunkSize) > 0 ? (int) (filesize / chunkSize) + 1 : (int) (filesize / chunkSize);
         this.chunks = chunks;
         // 开始分片上传
         Cleaner inMLocalCleaner = null;
@@ -82,8 +82,8 @@ public class WebClientChunkUpload extends Upload {
             for (int chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
                 logger.info(">>>>>>当前是第{}片", chunkIndex);
 
-                int startPosition = chunkIndex * chunkSize;
-                chunkSize = startPosition + chunkSize > filesize ? (int) filesize - startPosition : chunkSize;
+                long startPosition = (long) chunkIndex * chunkSize;
+                chunkSize = startPosition + chunkSize > filesize ? (int) (filesize - startPosition) : chunkSize;
                 if (chunkSize <= 0) {
                     break;
                 }
@@ -184,6 +184,7 @@ public class WebClientChunkUpload extends Upload {
                 .addMd5(this.md5)
                 .addChunk(chunk)
                 .addChunks(this.chunks)
+                .addTenantKey(this.tenantKey)
                 .addFilterUpload(this::filterUploadBeanMap)
                 .blockUpload(typeReference);
     }

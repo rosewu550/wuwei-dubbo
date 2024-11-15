@@ -26,7 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class FileWebClient {
 
-    public static final String FILE_HOST = "https://weapp.yunteams.cn";
+//    public static final String FILE_HOST = "https://weapp.yunteams.cn";
+    public static final String FILE_HOST = "https://www.e-cology.com.cn";
 
 
     private static final AtomicReference<WebClient> atomWebClient = new AtomicReference<>(null);
