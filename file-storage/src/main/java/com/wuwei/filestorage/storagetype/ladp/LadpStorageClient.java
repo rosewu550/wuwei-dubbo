@@ -6,6 +6,7 @@ import javax.naming.directory.*;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import java.util.Hashtable;
+import java.util.Scanner;
 
 /**
  * 描述：
@@ -17,11 +18,18 @@ public class LadpStorageClient {
 
 
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
         // LDAP服务器连接配置
-        String ldapUrl = "ldap://192.168.8.105:389"; // LDAP服务器地址和端口
-        String baseDn = "dc=example,dc=com";     // 基本DN，用于定义LDAP的起始目录
-        String username = "cn=admin,dc=example,dc=com"; // LDAP管理员用户名
-        String password = "password"; // LDAP管理员密码
+        System.out.println("请输入ladp服务器地址 (示例：ldap://192.168.1.1:389) : ");
+        String ldapUrl = scanner.nextLine();
+//        String ldapUrl = "ldap://192.168.8.105:389"; // LDAP服务器地址和端口
+        System.out.println("请输入ladp根目录 (示例：D:/weaver/data, OU=data,OU=weaver,DC=D,DC=example,DC=com) : ");
+        String baseDn = "dc=alphaxxcompany,dc=com";     // 基本DN，用于定义LDAP的起始目录
+        String username = "cn=alphaxx,dc=alphaxxCompany,dc=com"; // LDAP管理员用户名
+        String password = "10055pp"; // LDAP管理员密码
+        String searchDn = "dc=alphaxxcompany,dc=com"; // 要查询的目录DN
+
 
         // 设置LDAP环境
         Hashtable<String, String> env = new Hashtable<>();
@@ -44,24 +52,36 @@ public class LadpStorageClient {
 
             // 配置搜索控制
             SearchControls searchControls = new SearchControls();
-            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            searchControls.setReturningAttributes(attributes);
+//            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+//            searchControls.setReturningAttributes(attributes);
+            searchControls.setSearchScope(SearchControls.OBJECT_SCOPE); // 只查询当前对象
+            searchControls.setReturningAttributes(new String[]{"ntSecurityDescriptor"}); // Active Directory的ACL属性
 
             // 执行查询
-            NamingEnumeration<SearchResult> results = ctx.search(baseDn, searchFilter, searchControls);
-
+//            NamingEnumeration<SearchResult> results = ctx.search(baseDn, searchFilter, searchControls);
+            NamingEnumeration<SearchResult> results = ctx.search(searchDn, "(objectClass=*)", searchControls);
             // 遍历查询结果
             while (results.hasMore()) {
                 SearchResult result = results.next();
                 Attributes attrs = result.getAttributes();
+                Attribute aclAttr = attrs.get("ntSecurityDescriptor");
 
-                System.out.println("DN: " + result.getNameInNamespace());
-                for (String attr : attributes) {
-                    Attribute attribute = attrs.get(attr);
-                    if (attribute != null) {
-                        System.out.println(attr + ": " + attribute);
-                    }
+                if (aclAttr != null) {
+                    // 解析ACL信息
+                    byte[] aclBytes = (byte[]) aclAttr.get();
+                    System.out.println("解析ACL信息: " + new String(aclBytes));
+//                    parseAcl(aclBytes); // 自定义解析ACL的逻辑
+                } else {
+                    System.out.println("该对象没有ntSecurityDescriptor属性。");
                 }
+
+//                System.out.println("DN: " + result.getNameInNamespace());
+//                for (String attr : attributes) {
+//                    Attribute attribute = attrs.get(attr);
+//                    if (attribute != null) {
+//                        System.out.println(attr + ": " + attribute);
+//                    }
+//                }
                 System.out.println("-----------");
             }
 
